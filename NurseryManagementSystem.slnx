@@ -1,0 +1,6 @@
+<Solution>
+  <Project Path="NurseryManagementSystem.API/NurseryManagementSystem.API.csproj" />
+  <Project Path="NurseryManagementSystem.Application/NurseryManagementSystem.Application.csproj" />
+  <Project Path="NurseryManagementSystem.Domain/NurseryManagementSystem.Domain.csproj" />
+  <Project Path="NurseryManagementSystem.Infrastructure/NurseryManagementSystem.Infrastructure.csproj" />
+</Solution>
