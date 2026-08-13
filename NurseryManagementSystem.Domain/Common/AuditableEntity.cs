@@ -4,7 +4,7 @@ using System.Text;
 
 namespace NurseryManagementSystem.Domain.Common
 {
-    public class AuditableEntity
+    public class AuditableEntity : BaseEntity
     {
         public DateTime CreatedAt { get; set; }
         public Guid? CreatedBy { get; set; }

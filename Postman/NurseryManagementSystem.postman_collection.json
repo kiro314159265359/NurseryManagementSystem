@@ -1,0 +1,1187 @@
+{
+  "info": {
+    "_postman_id": "nursery-management-system-api",
+    "name": "Nursery Management System API",
+    "description": "Complete API collection for Nursery Management System with all endpoints for authentication, user management, children management, attendance tracking, billing, scheduling, and plan assignments.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "item": [
+    {
+      "name": "Authentication",
+      "description": "Authentication endpoints for login, token refresh, and logout",
+      "item": [
+        {
+          "name": "Login",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if (pm.response.code === 200) {",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.environment.set(\"accessToken\", jsonData.accessToken);",
+                  "    pm.environment.set(\"refreshToken\", jsonData.refreshToken);",
+                  "    pm.environment.set(\"userId\", jsonData.userId);",
+                  "    console.log('Access Token: ' + jsonData.accessToken);",
+                  "    console.log('User ID: ' + jsonData.userId);",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"admin@nursery.com\",\n  \"password\": \"Admin@123\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/auth/login",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "auth", "login"]
+            },
+            "description": "Authenticate user and get JWT tokens\n\n**Request Body:**\n- `email` (string): User email address\n- `password` (string): User password\n\n**Response:**\n- `accessToken` (string): JWT access token for authenticated requests\n- `refreshToken` (string): Refresh token for getting new access tokens\n- `userId` (string): ID of the authenticated user\n- `expiresIn` (integer): Token expiration time in seconds"
+          },
+          "response": []
+        },
+        {
+          "name": "Refresh Token",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"refreshToken\": \"{{refreshToken}}\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/auth/refresh",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "auth", "refresh"]
+            },
+            "description": "Refresh an expired access token using the refresh token\n\n**Request Body:**\n- `refreshToken` (string): Valid refresh token from login response\n\n**Response:**\n- `accessToken` (string): New JWT access token\n- `refreshToken` (string): New refresh token\n- `expiresIn` (integer): Token expiration time in seconds"
+          },
+          "response": []
+        },
+        {
+          "name": "Revoke Token",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"refreshToken\": \"{{refreshToken}}\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/auth/revoke",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "auth", "revoke"]
+            },
+            "description": "Revoke/logout by invalidating the refresh token\n\n**Request Body:**\n- `refreshToken` (string): Refresh token to revoke\n\n**Response:**\n- `204 No Content` on success"
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Users",
+      "description": "User management endpoints (SuperAdmin only)",
+      "item": [
+        {
+          "name": "Get All Users",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/users?pageNumber=1&pageSize=20&search=",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "users"],
+              "query": [
+                {
+                  "key": "pageNumber",
+                  "value": "1"
+                },
+                {
+                  "key": "pageSize",
+                  "value": "20"
+                },
+                {
+                  "key": "search",
+                  "value": "",
+                  "disabled": true
+                }
+              ]
+            },
+            "description": "Get paginated list of all users\n\n**Query Parameters:**\n- `pageNumber` (integer, default: 1): Page number for pagination\n- `pageSize` (integer, default: 20): Number of items per page\n- `search` (string, optional): Search term to filter users\n\n**Response:**\n- `items` (array): List of UserDto objects\n- `totalCount` (integer): Total number of users\n- `pageNumber` (integer): Current page number\n- `totalPages` (integer): Total number of pages\n\n**Requires:** SuperAdmin role"
+          },
+          "response": []
+        },
+        {
+          "name": "Get User By ID",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/users/{{userId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "users", "{{userId}}"]
+            },
+            "description": "Get details of a specific user by ID\n\n**Path Parameters:**\n- `id` (UUID): User ID\n\n**Response:** UserDto object with user details\n\n**Requires:** SuperAdmin role"
+          },
+          "response": []
+        },
+        {
+          "name": "Create User",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"firstName\": \"John\",\n  \"lastName\": \"Doe\",\n  \"email\": \"john.doe@nursery.com\",\n  \"password\": \"SecurePass@123\",\n  \"role\": \"Manager\",\n  \"phoneNumber\": \"+1234567890\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/users",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "users"]
+            },
+            "description": "Create a new user\n\n**Request Body:**\n- `firstName` (string): User's first name\n- `lastName` (string): User's last name\n- `email` (string): User's email (must be unique)\n- `password` (string): User's password\n- `role` (string): User role (SuperAdmin, Manager, Staff)\n- `phoneNumber` (string, optional): User's phone number\n\n**Response:**\n- `id` (UUID): ID of the newly created user\n\n**Requires:** SuperAdmin role"
+          },
+          "response": []
+        },
+        {
+          "name": "Update User",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"firstName\": \"John\",\n  \"lastName\": \"Smith\",\n  \"phoneNumber\": \"+1234567890\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/users/{{userId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "users", "{{userId}}"]
+            },
+            "description": "Update user information\n\n**Path Parameters:**\n- `id` (UUID): User ID to update\n\n**Request Body:**\n- `firstName` (string): Updated first name\n- `lastName` (string): Updated last name\n- `phoneNumber` (string, optional): Updated phone number\n\n**Response:** `204 No Content`\n\n**Requires:** SuperAdmin role"
+          },
+          "response": []
+        },
+        {
+          "name": "Assign Role",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"role\": \"Manager\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/users/{{userId}}/role",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "users", "{{userId}}", "role"]
+            },
+            "description": "Assign or change user role\n\n**Path Parameters:**\n- `id` (UUID): User ID\n\n**Request Body:**\n- `role` (string): New role (SuperAdmin, Manager, Staff)\n\n**Response:** `204 No Content`\n\n**Requires:** SuperAdmin role"
+          },
+          "response": []
+        },
+        {
+          "name": "Set User Active Status",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"isActive\": true\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/users/{{userId}}/active",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "users", "{{userId}}", "active"]
+            },
+            "description": "Activate or deactivate a user\n\n**Path Parameters:**\n- `id` (UUID): User ID\n\n**Request Body:**\n- `isActive` (boolean): True to activate, false to deactivate\n\n**Response:** `204 No Content`\n\n**Requires:** SuperAdmin role"
+          },
+          "response": []
+        },
+        {
+          "name": "Change Password",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"currentPassword\": \"OldPass@123\",\n  \"newPassword\": \"NewSecurePass@123\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/users/{{userId}}/password",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "users", "{{userId}}", "password"]
+            },
+            "description": "Change user password\n\n**Path Parameters:**\n- `id` (UUID): User ID\n\n**Request Body:**\n- `currentPassword` (string): Current password\n- `newPassword` (string): New password\n\n**Response:** `204 No Content`\n\n**Requires:** SuperAdmin role or user changing their own password"
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Children",
+      "description": "Children management endpoints",
+      "item": [
+        {
+          "name": "Get All Children",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/children?pageNumber=1&pageSize=20&search=&activeOnly=false",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "children"],
+              "query": [
+                {
+                  "key": "pageNumber",
+                  "value": "1"
+                },
+                {
+                  "key": "pageSize",
+                  "value": "20"
+                },
+                {
+                  "key": "search",
+                  "value": "",
+                  "disabled": true
+                },
+                {
+                  "key": "activeOnly",
+                  "value": "false"
+                }
+              ]
+            },
+            "description": "Get paginated list of children\n\n**Query Parameters:**\n- `pageNumber` (integer, default: 1): Page number for pagination\n- `pageSize` (integer, default: 20): Number of items per page\n- `search` (string, optional): Search by child name or parent contact\n- `activeOnly` (boolean, default: false): Filter for active children only\n\n**Response:**\n- `items` (array): List of ChildDto objects\n- `totalCount` (integer): Total number of children\n- `pageNumber` (integer): Current page number\n- `totalPages` (integer): Total number of pages"
+          },
+          "response": []
+        },
+        {
+          "name": "Get Child By ID",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/children/00000000-0000-0000-0000-000000000000",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "children", "00000000-0000-0000-0000-000000000000"]
+            },
+            "description": "Get detailed information about a specific child\n\n**Path Parameters:**\n- `id` (UUID): Child ID\n\n**Response:** ChildDetailsDto object with complete child information including emergency contacts"
+          },
+          "response": []
+        },
+        {
+          "name": "Create Child",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"firstName\": \"Sarah\",\n  \"lastName\": \"Johnson\",\n  \"dateOfBirth\": \"2020-06-15\",\n  \"parentFirstName\": \"Michael\",\n  \"parentLastName\": \"Johnson\",\n  \"parentEmail\": \"michael.johnson@email.com\",\n  \"parentPhoneNumber\": \"+1234567890\",\n  \"allergies\": \"Peanuts, Dairy\",\n  \"specialNeeds\": \"None\",\n  \"healthInsuranceNumber\": \"INS123456\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/children",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "children"]
+            },
+            "description": "Create a new child record\n\n**Request Body:**\n- `firstName` (string): Child's first name\n- `lastName` (string): Child's last name\n- `dateOfBirth` (date): Child's date of birth (format: YYYY-MM-DD)\n- `parentFirstName` (string): Parent/Guardian first name\n- `parentLastName` (string): Parent/Guardian last name\n- `parentEmail` (string): Parent/Guardian email\n- `parentPhoneNumber` (string): Parent/Guardian phone number\n- `allergies` (string, optional): Known allergies\n- `specialNeeds` (string, optional): Special needs or considerations\n- `healthInsuranceNumber` (string, optional): Health insurance number\n\n**Response:**\n- `id` (UUID): ID of the newly created child"
+          },
+          "response": []
+        },
+        {
+          "name": "Update Child",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"firstName\": \"Sarah\",\n  \"lastName\": \"Johnson\",\n  \"dateOfBirth\": \"2020-06-15\",\n  \"parentFirstName\": \"Michael\",\n  \"parentLastName\": \"Johnson\",\n  \"parentEmail\": \"michael.johnson.new@email.com\",\n  \"parentPhoneNumber\": \"+1987654321\",\n  \"allergies\": \"Peanuts, Dairy, Eggs\",\n  \"specialNeeds\": \"None\",\n  \"healthInsuranceNumber\": \"INS123456\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/children/00000000-0000-0000-0000-000000000000",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "children", "00000000-0000-0000-0000-000000000000"]
+            },
+            "description": "Update child information\n\n**Path Parameters:**\n- `id` (UUID): Child ID to update\n\n**Request Body:**\n- Same as Create Child endpoint\n\n**Response:** `204 No Content`"
+          },
+          "response": []
+        },
+        {
+          "name": "Set Child Active Status",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"isActive\": true\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/children/00000000-0000-0000-0000-000000000000/active",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "children", "00000000-0000-0000-0000-000000000000", "active"]
+            },
+            "description": "Activate or deactivate a child\n\n**Path Parameters:**\n- `id` (UUID): Child ID\n\n**Request Body:**\n- `isActive` (boolean): True to activate, false to deactivate\n\n**Response:** `204 No Content`"
+          },
+          "response": []
+        },
+        {
+          "name": "Add Emergency Contact",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"firstName\": \"Jane\",\n  \"lastName\": \"Smith\",\n  \"relationship\": \"Aunt\",\n  \"phoneNumber\": \"+1111111111\",\n  \"email\": \"jane.smith@email.com\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/children/00000000-0000-0000-0000-000000000000/emergency-contacts",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "children", "00000000-0000-0000-0000-000000000000", "emergency-contacts"]
+            },
+            "description": "Add an emergency contact for a child\n\n**Path Parameters:**\n- `childId` (UUID): Child ID\n\n**Request Body:**\n- `firstName` (string): Contact's first name\n- `lastName` (string): Contact's last name\n- `relationship` (string): Relationship to child (e.g., Grandparent, Uncle, Aunt)\n- `phoneNumber` (string): Contact's phone number\n- `email` (string, optional): Contact's email\n\n**Response:**\n- `id` (UUID): ID of the newly created emergency contact"
+          },
+          "response": []
+        },
+        {
+          "name": "Remove Emergency Contact",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/children/00000000-0000-0000-0000-000000000000/emergency-contacts/00000000-0000-0000-0000-000000000000",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "children", "00000000-0000-0000-0000-000000000000", "emergency-contacts", "00000000-0000-0000-0000-000000000000"]
+            },
+            "description": "Remove an emergency contact\n\n**Path Parameters:**\n- `childId` (UUID): Child ID\n- `contactId` (UUID): Emergency contact ID to remove\n\n**Response:** `204 No Content`"
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Attendance",
+      "description": "Attendance tracking for children and staff",
+      "item": [
+        {
+          "name": "Child Check-In",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"childId\": \"00000000-0000-0000-0000-000000000000\",\n  \"checkInTime\": \"2024-01-15T08:30:00\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/attendance/children/check-in",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "attendance", "children", "check-in"]
+            },
+            "description": "Record a child's check-in time\n\n**Request Body:**\n- `childId` (UUID): ID of the child checking in\n- `checkInTime` (datetime): Time of check-in (ISO 8601 format)\n\n**Response:** ChildAttendanceDto with attendance details"
+          },
+          "response": []
+        },
+        {
+          "name": "Child Check-Out",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"childId\": \"00000000-0000-0000-0000-000000000000\",\n  \"checkOutTime\": \"2024-01-15T17:00:00\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/attendance/children/check-out",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "attendance", "children", "check-out"]
+            },
+            "description": "Record a child's check-out time\n\n**Request Body:**\n- `childId` (UUID): ID of the child checking out\n- `checkOutTime` (datetime): Time of check-out (ISO 8601 format)\n\n**Response:** ChildAttendanceDto with attendance details"
+          },
+          "response": []
+        },
+        {
+          "name": "Staff Check-In",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"userId\": \"00000000-0000-0000-0000-000000000000\",\n  \"checkInTime\": \"2024-01-15T07:30:00\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/attendance/staff/check-in",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "attendance", "staff", "check-in"]
+            },
+            "description": "Record staff member's check-in time\n\n**Request Body:**\n- `userId` (UUID): ID of the staff member\n- `checkInTime` (datetime): Time of check-in (ISO 8601 format)\n\n**Response:** StaffAttendanceDto with attendance details"
+          },
+          "response": []
+        },
+        {
+          "name": "Staff Check-Out",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"userId\": \"00000000-0000-0000-0000-000000000000\",\n  \"checkOutTime\": \"2024-01-15T18:00:00\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/attendance/staff/check-out",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "attendance", "staff", "check-out"]
+            },
+            "description": "Record staff member's check-out time\n\n**Request Body:**\n- `userId` (UUID): ID of the staff member\n- `checkOutTime` (datetime): Time of check-out (ISO 8601 format)\n\n**Response:** StaffAttendanceDto with attendance details"
+          },
+          "response": []
+        },
+        {
+          "name": "Get Child Attendance",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/attendance/children/00000000-0000-0000-0000-000000000000?from=2024-01-01&to=2024-01-31&pageNumber=1&pageSize=20",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "attendance", "children", "00000000-0000-0000-0000-000000000000"],
+              "query": [
+                {
+                  "key": "from",
+                  "value": "2024-01-01"
+                },
+                {
+                  "key": "to",
+                  "value": "2024-01-31"
+                },
+                {
+                  "key": "pageNumber",
+                  "value": "1"
+                },
+                {
+                  "key": "pageSize",
+                  "value": "20"
+                }
+              ]
+            },
+            "description": "Get attendance records for a specific child\n\n**Path Parameters:**\n- `childId` (UUID): Child ID\n\n**Query Parameters:**\n- `from` (date, optional): Start date for attendance range (YYYY-MM-DD)\n- `to` (date, optional): End date for attendance range (YYYY-MM-DD)\n- `pageNumber` (integer, default: 1): Page number for pagination\n- `pageSize` (integer, default: 20): Number of items per page\n\n**Response:**\n- `items` (array): List of ChildAttendanceDto objects\n- `totalCount` (integer): Total attendance records\n- `pageNumber` (integer): Current page number\n- `totalPages` (integer): Total number of pages"
+          },
+          "response": []
+        },
+        {
+          "name": "Get Staff Attendance",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/attendance/staff?userId=00000000-0000-0000-0000-000000000000&from=2024-01-01&to=2024-01-31&pageNumber=1&pageSize=20",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "attendance", "staff"],
+              "query": [
+                {
+                  "key": "userId",
+                  "value": "00000000-0000-0000-0000-000000000000",
+                  "disabled": true
+                },
+                {
+                  "key": "from",
+                  "value": "2024-01-01",
+                  "disabled": true
+                },
+                {
+                  "key": "to",
+                  "value": "2024-01-31",
+                  "disabled": true
+                },
+                {
+                  "key": "pageNumber",
+                  "value": "1"
+                },
+                {
+                  "key": "pageSize",
+                  "value": "20"
+                }
+              ]
+            },
+            "description": "Get attendance records for staff\n\n**Query Parameters:**\n- `userId` (UUID, optional): Filter by specific staff member\n- `from` (date, optional): Start date for attendance range (YYYY-MM-DD)\n- `to` (date, optional): End date for attendance range (YYYY-MM-DD)\n- `pageNumber` (integer, default: 1): Page number for pagination\n- `pageSize` (integer, default: 20): Number of items per page\n\n**Response:**\n- `items` (array): List of StaffAttendanceDto objects\n- `totalCount` (integer): Total attendance records\n- `pageNumber` (integer): Current page number\n- `totalPages` (integer): Total number of pages"
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Plans",
+      "description": "Nursery care plans management",
+      "item": [
+        {
+          "name": "Get All Plans",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/plans",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "plans"]
+            },
+            "description": "Get all available care plans\n\n**Response:** Array of PlanDto objects"
+          },
+          "response": []
+        },
+        {
+          "name": "Get Plan By ID",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/plans/00000000-0000-0000-0000-000000000000",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "plans", "00000000-0000-0000-0000-000000000000"]
+            },
+            "description": "Get details of a specific care plan\n\n**Path Parameters:**\n- `id` (UUID): Plan ID\n\n**Response:** PlanDto object"
+          },
+          "response": []
+        },
+        {
+          "name": "Create Plan",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Full Time Plan\",\n  \"description\": \"Full-time nursery care from 7:00 AM to 6:00 PM\",\n  \"monthlyFee\": 1200.00,\n  \"operatingHours\": \"7:00 AM - 6:00 PM\",\n  \"ageGroup\": \"1-3 years\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/plans",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "plans"]
+            },
+            "description": "Create a new care plan\n\n**Request Body:**\n- `name` (string): Plan name\n- `description` (string): Plan description\n- `monthlyFee` (decimal): Monthly fee amount\n- `operatingHours` (string): Operating hours\n- `ageGroup` (string): Age group this plan is for\n\n**Response:**\n- `id` (UUID): ID of the newly created plan\n\n**Requires:** SuperAdmin role"
+          },
+          "response": []
+        },
+        {
+          "name": "Update Plan",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Full Time Plan\",\n  \"description\": \"Full-time nursery care from 7:00 AM to 6:00 PM\",\n  \"monthlyFee\": 1300.00,\n  \"operatingHours\": \"7:00 AM - 6:00 PM\",\n  \"ageGroup\": \"1-3 years\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/plans/00000000-0000-0000-0000-000000000000",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "plans", "00000000-0000-0000-0000-000000000000"]
+            },
+            "description": "Update a care plan\n\n**Path Parameters:**\n- `id` (UUID): Plan ID to update\n\n**Request Body:**\n- Same as Create Plan endpoint\n\n**Response:** `204 No Content`\n\n**Requires:** SuperAdmin role"
+          },
+          "response": []
+        },
+        {
+          "name": "Delete Plan",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/plans/00000000-0000-0000-0000-000000000000",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "plans", "00000000-0000-0000-0000-000000000000"]
+            },
+            "description": "Delete a care plan\n\n**Path Parameters:**\n- `id` (UUID): Plan ID to delete\n\n**Response:** `204 No Content`\n\n**Requires:** SuperAdmin role"
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Plan Assignments",
+      "description": "Assign care plans to children",
+      "item": [
+        {
+          "name": "Assign Plan",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"childId\": \"00000000-0000-0000-0000-000000000000\",\n  \"planId\": \"00000000-0000-0000-0000-000000000000\",\n  \"startDate\": \"2024-01-15\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/plan-assignments",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "plan-assignments"]
+            },
+            "description": "Assign a care plan to a child\n\n**Request Body:**\n- `childId` (UUID): ID of the child\n- `planId` (UUID): ID of the plan to assign\n- `startDate` (date): Plan start date (YYYY-MM-DD)\n\n**Response:**\n- `id` (UUID): ID of the plan assignment"
+          },
+          "response": []
+        },
+        {
+          "name": "End Plan Assignment",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"endDate\": \"2024-12-31\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/plan-assignments/00000000-0000-0000-0000-000000000000/end",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "plan-assignments", "00000000-0000-0000-0000-000000000000", "end"]
+            },
+            "description": "End/terminate a plan assignment\n\n**Path Parameters:**\n- `id` (UUID): Plan assignment ID\n\n**Request Body:**\n- `endDate` (date): Date to end the assignment (YYYY-MM-DD)\n\n**Response:** `204 No Content`"
+          },
+          "response": []
+        },
+        {
+          "name": "Get Child Assignments",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/plan-assignments/child/00000000-0000-0000-0000-000000000000",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "plan-assignments", "child", "00000000-0000-0000-0000-000000000000"]
+            },
+            "description": "Get all plan assignments for a specific child\n\n**Path Parameters:**\n- `childId` (UUID): Child ID\n\n**Response:** Array of PlanAssignmentDto objects"
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Billing",
+      "description": "Invoice and billing management",
+      "item": [
+        {
+          "name": "Generate Monthly Invoices",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"year\": 2024,\n  \"month\": 1\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/billing/generate",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "billing", "generate"]
+            },
+            "description": "Generate monthly invoices for all active plans\n\n**Request Body:**\n- `year` (integer): Year for invoice generation\n- `month` (integer): Month for invoice generation (1-12)\n\n**Response:**\n- `generated` (integer): Number of invoices generated"
+          },
+          "response": []
+        },
+        {
+          "name": "Get Invoices",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/billing/invoices?childId=00000000-0000-0000-0000-000000000000&status=Pending&year=2024&month=1&pageNumber=1&pageSize=20",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "billing", "invoices"],
+              "query": [
+                {
+                  "key": "childId",
+                  "value": "00000000-0000-0000-0000-000000000000",
+                  "disabled": true
+                },
+                {
+                  "key": "status",
+                  "value": "Pending",
+                  "disabled": true
+                },
+                {
+                  "key": "year",
+                  "value": "2024",
+                  "disabled": true
+                },
+                {
+                  "key": "month",
+                  "value": "1",
+                  "disabled": true
+                },
+                {
+                  "key": "pageNumber",
+                  "value": "1"
+                },
+                {
+                  "key": "pageSize",
+                  "value": "20"
+                }
+              ]
+            },
+            "description": "Get paginated list of invoices with optional filters\n\n**Query Parameters:**\n- `childId` (UUID, optional): Filter by specific child\n- `status` (string, optional): Filter by status (Pending, Paid, Cancelled)\n- `year` (integer, optional): Filter by year\n- `month` (integer, optional): Filter by month (1-12)\n- `pageNumber` (integer, default: 1): Page number for pagination\n- `pageSize` (integer, default: 20): Number of items per page\n\n**Response:**\n- `items` (array): List of InvoiceDto objects\n- `totalCount` (integer): Total invoices\n- `pageNumber` (integer): Current page number\n- `totalPages` (integer): Total number of pages"
+          },
+          "response": []
+        },
+        {
+          "name": "Get Invoice By ID",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/billing/invoices/00000000-0000-0000-0000-000000000000",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "billing", "invoices", "00000000-0000-0000-0000-000000000000"]
+            },
+            "description": "Get details of a specific invoice\n\n**Path Parameters:**\n- `id` (UUID): Invoice ID\n\n**Response:** InvoiceDto object"
+          },
+          "response": []
+        },
+        {
+          "name": "Mark Invoice Paid",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/billing/invoices/00000000-0000-0000-0000-000000000000/pay",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "billing", "invoices", "00000000-0000-0000-0000-000000000000", "pay"]
+            },
+            "description": "Mark an invoice as paid\n\n**Path Parameters:**\n- `id` (UUID): Invoice ID\n\n**Response:** `204 No Content`"
+          },
+          "response": []
+        },
+        {
+          "name": "Cancel Invoice",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/billing/invoices/00000000-0000-0000-0000-000000000000/cancel",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "billing", "invoices", "00000000-0000-0000-0000-000000000000", "cancel"]
+            },
+            "description": "Cancel an invoice\n\n**Path Parameters:**\n- `id` (UUID): Invoice ID\n\n**Response:** `204 No Content`"
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Schedule",
+      "description": "Schedule slot management for nursery operations",
+      "item": [
+        {
+          "name": "Get Schedule",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/schedule?activeOnly=false",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "schedule"],
+              "query": [
+                {
+                  "key": "activeOnly",
+                  "value": "false"
+                }
+              ]
+            },
+            "description": "Get all schedule slots\n\n**Query Parameters:**\n- `activeOnly` (boolean, default: false): Filter for active slots only\n\n**Response:** Array of ScheduleSlotDto objects"
+          },
+          "response": []
+        },
+        {
+          "name": "Create Schedule Slot",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Morning Session\",\n  \"startTime\": \"07:00\",\n  \"endTime\": \"12:00\",\n  \"capacity\": 20,\n  \"description\": \"Morning nursery session\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/schedule",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "schedule"]
+            },
+            "description": "Create a new schedule slot\n\n**Request Body:**\n- `name` (string): Slot name\n- `startTime` (string): Start time (HH:mm format)\n- `endTime` (string): End time (HH:mm format)\n- `capacity` (integer): Maximum capacity for the slot\n- `description` (string, optional): Slot description\n\n**Response:**\n- `id` (UUID): ID of the newly created schedule slot"
+          },
+          "response": []
+        },
+        {
+          "name": "Update Schedule Slot",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Morning Session\",\n  \"startTime\": \"07:00\",\n  \"endTime\": \"12:00\",\n  \"capacity\": 25,\n  \"description\": \"Updated morning nursery session\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/schedule/00000000-0000-0000-0000-000000000000",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "schedule", "00000000-0000-0000-0000-000000000000"]
+            },
+            "description": "Update a schedule slot\n\n**Path Parameters:**\n- `id` (UUID): Schedule slot ID to update\n\n**Request Body:**\n- Same as Create Schedule Slot endpoint\n\n**Response:** `204 No Content`"
+          },
+          "response": []
+        },
+        {
+          "name": "Delete Schedule Slot",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/schedule/00000000-0000-0000-0000-000000000000",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "schedule", "00000000-0000-0000-0000-000000000000"]
+            },
+            "description": "Delete a schedule slot\n\n**Path Parameters:**\n- `id` (UUID): Schedule slot ID to delete\n\n**Response:** `204 No Content`"
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Session Logs",
+      "description": "User session logging and audit trails",
+      "item": [
+        {
+          "name": "Get Session Logs",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/session-logs?userId=00000000-0000-0000-0000-000000000000&pageNumber=1&pageSize=20",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "session-logs"],
+              "query": [
+                {
+                  "key": "userId",
+                  "value": "00000000-0000-0000-0000-000000000000",
+                  "disabled": true
+                },
+                {
+                  "key": "pageNumber",
+                  "value": "1"
+                },
+                {
+                  "key": "pageSize",
+                  "value": "20"
+                }
+              ]
+            },
+            "description": "Get paginated list of session logs\n\n**Query Parameters:**\n- `userId` (UUID, optional): Filter by specific user\n- `pageNumber` (integer, default: 1): Page number for pagination\n- `pageSize` (integer, default: 20): Number of items per page\n\n**Response:**\n- `items` (array): List of SessionLogDto objects\n- `totalCount` (integer): Total session logs\n- `pageNumber` (integer): Current page number\n- `totalPages` (integer): Total number of pages\n\n**Requires:** SuperAdmin role"
+          },
+          "response": []
+        }
+      ]
+    }
+  ],
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "http://localhost:5293",
+      "type": "string"
+    },
+    {
+      "key": "accessToken",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "refreshToken",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "userId",
+      "value": "",
+      "type": "string"
+    }
+  ]
+}
