@@ -48,7 +48,19 @@ Generated\ Files/
 # NUnit
 *.VisualState.xml
 TestResult.xml
-nunit-*.xml
+
+# Environment variables and secrets
+.env
+.env.local
+.env.*.local
+*.key
+secrets.json
+appsettings.Development.json
+
+# Docker
+.docker/
+docker-compose.override.yml
+
 
 # Build Results of an ATL Project
 [Dd]ebugPS/

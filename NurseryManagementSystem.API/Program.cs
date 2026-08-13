@@ -19,6 +19,17 @@ namespace NurseryManagementSystem.API
             // Learn more about configuring OpenAPI at https://aka.ms/aspnet/openapi
             builder.Services.AddOpenApi();
 
+            // CORS configuration for frontend
+            builder.Services.AddCors(options =>
+            {
+                options.AddPolicy("AllowAll", policy =>
+                {
+                    policy.AllowAnyOrigin()
+                          .AllowAnyMethod()
+                          .AllowAnyHeader();
+                });
+            });
+
             builder.Services.AddApplication();
             builder.Services.AddInfrastructure(builder.Configuration);
 
@@ -28,6 +39,12 @@ namespace NurseryManagementSystem.API
             var app = builder.Build();
 
             app.UseExceptionHandler();
+
+            // CORS middleware
+            app.UseCors("AllowAll");
+
+            // Health check endpoint for Render
+            app.MapGet("/health", () => Results.Ok(new { status = "healthy", timestamp = DateTime.UtcNow }));
 
             using (var scope = app.Services.CreateScope())
             {

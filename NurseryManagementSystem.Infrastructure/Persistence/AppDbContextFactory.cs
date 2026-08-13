@@ -14,6 +14,7 @@ namespace NurseryManagementSystem.Infrastructure.Persistence
         {
             var connectionString =
                 Environment.GetEnvironmentVariable("NMS_CONNECTION_STRING")
+                ?? Environment.GetEnvironmentVariable("ConnectionStrings__DefaultConnection")
                 ?? "Host=localhost;Port=5432;Database=nursery_management;Username=postgres;Password=liojinx12_kiro.";
 
             var optionsBuilder = new DbContextOptionsBuilder<AppDbContext>();

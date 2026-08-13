@@ -32,9 +32,10 @@ namespace NurseryManagementSystem.Infrastructure
             {
                 var connectionString = configuration.GetConnectionString("DefaultConnection");
 
-                Console.WriteLine($"EF CONNECTION: {connectionString}");
+                // Remove debug console log for production
+                // Console.WriteLine($"EF CONNECTION: {connectionString}");
                 options.UseNpgsql(
-                    configuration.GetConnectionString("DefaultConnection"),
+                    connectionString,
                     npgsql => npgsql.MigrationsAssembly(typeof(AppDbContext).Assembly.FullName));
 
                 options.AddInterceptors(
@@ -74,6 +75,11 @@ namespace NurseryManagementSystem.Infrastructure
 
             var jwtSettings = section.Get<JwtSettings>() ?? new JwtSettings();
 
+            // For Render deployment, prioritize environment variables
+            var secretKey = Environment.GetEnvironmentVariable("Jwt__SecretKey") ?? jwtSettings.SecretKey;
+            var issuer = Environment.GetEnvironmentVariable("Jwt__Issuer") ?? jwtSettings.Issuer;
+            var audience = Environment.GetEnvironmentVariable("Jwt__Audience") ?? jwtSettings.Audience;
+
             services
                 .AddAuthentication(options =>
                 {
@@ -88,10 +94,10 @@ namespace NurseryManagementSystem.Infrastructure
                         ValidateAudience = true,
                         ValidateLifetime = true,
                         ValidateIssuerSigningKey = true,
-                        ValidIssuer = jwtSettings.Issuer,
-                        ValidAudience = jwtSettings.Audience,
+                        ValidIssuer = issuer,
+                        ValidAudience = audience,
                         IssuerSigningKey = new SymmetricSecurityKey(
-                            Encoding.UTF8.GetBytes(jwtSettings.SecretKey)),
+                            Encoding.UTF8.GetBytes(secretKey)),
                         ClockSkew = TimeSpan.Zero
                     };
                 });
