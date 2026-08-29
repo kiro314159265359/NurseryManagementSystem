@@ -31,12 +31,30 @@ namespace NurseryManagementSystem.Infrastructure
             services.AddDbContext<AppDbContext>((serviceProvider, options) =>
             {
                 var connectionString = configuration.GetConnectionString("DefaultConnection");
+                if (string.IsNullOrWhiteSpace(connectionString))
+                {
+                    throw new InvalidOperationException(
+                        "ConnectionStrings:DefaultConnection must be configured.");
+                }
 
-                // Remove debug console log for production
-                // Console.WriteLine($"EF CONNECTION: {connectionString}");
-                options.UseNpgsql(
-                    connectionString,
-                    npgsql => npgsql.MigrationsAssembly(typeof(AppDbContext).Assembly.FullName));
+                var databaseProvider = configuration["DatabaseProvider"] ?? "PostgreSQL";
+                if (databaseProvider.Equals("SqlServer", StringComparison.OrdinalIgnoreCase))
+                {
+                    options.UseSqlServer(
+                        connectionString,
+                        sqlServer => sqlServer.MigrationsAssembly(typeof(AppDbContext).Assembly.FullName));
+                }
+                else if (databaseProvider.Equals("PostgreSQL", StringComparison.OrdinalIgnoreCase))
+                {
+                    options.UseNpgsql(
+                        connectionString,
+                        npgsql => npgsql.MigrationsAssembly(typeof(AppDbContext).Assembly.FullName));
+                }
+                else
+                {
+                    throw new InvalidOperationException(
+                        "DatabaseProvider must be either 'SqlServer' or 'PostgreSQL'.");
+                }
 
                 options.AddInterceptors(
                     serviceProvider.GetRequiredService<AuditableEntitySaveChangesInterceptor>());
@@ -75,10 +93,15 @@ namespace NurseryManagementSystem.Infrastructure
 
             var jwtSettings = section.Get<JwtSettings>() ?? new JwtSettings();
 
-            // For Render deployment, prioritize environment variables
-            var secretKey = Environment.GetEnvironmentVariable("Jwt__SecretKey") ?? jwtSettings.SecretKey;
-            var issuer = Environment.GetEnvironmentVariable("Jwt__Issuer") ?? jwtSettings.Issuer;
-            var audience = Environment.GetEnvironmentVariable("Jwt__Audience") ?? jwtSettings.Audience;
+            var secretKey = jwtSettings.SecretKey;
+            var issuer = jwtSettings.Issuer;
+            var audience = jwtSettings.Audience;
+
+            if (string.IsNullOrWhiteSpace(secretKey) || secretKey.Length < 32)
+            {
+                throw new InvalidOperationException(
+                    "Jwt:SecretKey must be configured with at least 32 characters.");
+            }
 
             services
                 .AddAuthentication(options =>

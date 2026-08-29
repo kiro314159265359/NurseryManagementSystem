@@ -1,5 +1,6 @@
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Configuration;
 using NurseryManagementSystem.Domain.Entities.Identity;
 using NurseryManagementSystem.Domain.Enums;
 
@@ -10,22 +11,28 @@ namespace NurseryManagementSystem.Infrastructure.Persistence
         private readonly AppDbContext _context;
         private readonly UserManager<AppUser> _userManager;
         private readonly RoleManager<IdentityRole<Guid>> _roleManager;
+        private readonly IConfiguration _configuration;
 
         public ApplicationDbInitializer(
             AppDbContext context,
             UserManager<AppUser> userManager,
-            RoleManager<IdentityRole<Guid>> roleManager)
+            RoleManager<IdentityRole<Guid>> roleManager,
+            IConfiguration configuration)
         {
             _context = context;
             _userManager = userManager;
             _roleManager = roleManager;
+            _configuration = configuration;
         }
 
         public async Task InitializeAsync(CancellationToken cancellationToken = default)
         {
             if (_context.Database.IsRelational())
             {
-                await _context.Database.MigrateAsync(cancellationToken);
+                // MonsterASP databases are provisioned empty. EnsureCreated builds the
+                // SQL Server schema from the current model without requiring provider-
+                // specific migration files from the previous PostgreSQL deployment.
+                await _context.Database.EnsureCreatedAsync(cancellationToken);
             }
         }
 
@@ -39,7 +46,14 @@ namespace NurseryManagementSystem.Infrastructure.Persistence
                 }
             }
 
-            const string adminUserName = "superadmin";
+            var adminUserName = _configuration["AdminSeed:UserName"];
+            var adminPassword = _configuration["AdminSeed:Password"];
+
+            if (string.IsNullOrWhiteSpace(adminUserName) ||
+                string.IsNullOrWhiteSpace(adminPassword))
+            {
+                return;
+            }
 
             if (await _userManager.FindByNameAsync(adminUserName) is null)
             {
@@ -53,11 +67,14 @@ namespace NurseryManagementSystem.Infrastructure.Persistence
                     EmailConfirmed = true
                 };
 
-                var result = await _userManager.CreateAsync(admin, "Admin@12345");
-                if (result.Succeeded)
+                var result = await _userManager.CreateAsync(admin, adminPassword);
+                if (!result.Succeeded)
                 {
-                    await _userManager.AddToRoleAsync(admin, UserRole.SuperAdmin.ToString());
+                    var errors = string.Join("; ", result.Errors.Select(error => error.Description));
+                    throw new InvalidOperationException($"Unable to create the initial admin user: {errors}");
                 }
+
+                await _userManager.AddToRoleAsync(admin, UserRole.SuperAdmin.ToString());
             }
         }
     }
