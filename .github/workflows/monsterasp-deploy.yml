@@ -3,6 +3,8 @@ name: Build and deploy to MonsterASP.NET
 on:
   push:
     branches: [master]
+  pull_request:
+    branches: [master]
   workflow_dispatch:
 
 concurrency:
@@ -34,6 +36,7 @@ jobs:
         run: dotnet publish NurseryManagementSystem.API/NurseryManagementSystem.API.csproj --configuration Release --output ./publish --runtime win-x86 --self-contained false --no-restore
 
       - name: Deploy with Web Deploy
+        if: github.event_name != 'pull_request'
         uses: rasmusbuchholdt/simply-web-deploy@2.1.0
         with:
           website-name: ${{ secrets.WEBSITE_NAME }}
