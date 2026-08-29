@@ -1,0 +1,45 @@
+name: Build and deploy to MonsterASP.NET
+
+on:
+  push:
+    branches: [master]
+  pull_request:
+    branches: [master]
+  workflow_dispatch:
+
+concurrency:
+  group: monsterasp-production
+  cancel-in-progress: true
+
+jobs:
+  build-and-deploy:
+    runs-on: windows-latest
+    permissions:
+      contents: read
+
+    steps:
+      - name: Check out source
+        uses: actions/checkout@v4
+
+      - name: Set up .NET 10
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 10.0.x
+
+      - name: Restore
+        run: dotnet restore NurseryManagementSystem.slnx
+
+      - name: Build
+        run: dotnet build NurseryManagementSystem.slnx --configuration Release --no-restore
+
+      - name: Publish API
+        run: dotnet publish NurseryManagementSystem.API/NurseryManagementSystem.API.csproj --configuration Release --output ./publish --runtime win-x86 --self-contained false
+
+      - name: Deploy with Web Deploy
+        if: github.event_name != 'pull_request'
+        uses: rasmusbuchholdt/simply-web-deploy@2.1.0
+        with:
+          website-name: ${{ secrets.WEBSITE_NAME }}
+          server-computer-name: ${{ secrets.SERVER_COMPUTER_NAME }}
+          server-username: ${{ secrets.SERVER_USERNAME }}
+          server-password: ${{ secrets.SERVER_PASSWORD }}
