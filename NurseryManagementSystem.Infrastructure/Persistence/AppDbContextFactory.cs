@@ -15,12 +15,12 @@ namespace NurseryManagementSystem.Infrastructure.Persistence
             var connectionString =
                 Environment.GetEnvironmentVariable("NMS_CONNECTION_STRING")
                 ?? Environment.GetEnvironmentVariable("ConnectionStrings__DefaultConnection")
-                ?? "Host=localhost;Port=5432;Database=nursery_management;Username=postgres;Password=liojinx12_kiro.";
+                ?? "Server=(localdb)\\mssqllocaldb;Database=NurseryManagementSystem;Trusted_Connection=True;MultipleActiveResultSets=true;TrustServerCertificate=True";
 
             var optionsBuilder = new DbContextOptionsBuilder<AppDbContext>();
-            optionsBuilder.UseNpgsql(
+            optionsBuilder.UseSqlServer(
                 connectionString,
-                npgsql => npgsql.MigrationsAssembly(typeof(AppDbContext).Assembly.FullName));
+                sqlServer => sqlServer.MigrationsAssembly(typeof(AppDbContext).Assembly.FullName));
 
             return new AppDbContext(optionsBuilder.Options);
         }
