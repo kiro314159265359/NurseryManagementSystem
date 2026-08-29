@@ -33,7 +33,7 @@ jobs:
         run: dotnet build NurseryManagementSystem.slnx --configuration Release --no-restore
 
       - name: Publish API
-        run: dotnet publish NurseryManagementSystem.API/NurseryManagementSystem.API.csproj --configuration Release --output ./publish --runtime win-x86 --self-contained false --no-restore
+        run: dotnet publish NurseryManagementSystem.API/NurseryManagementSystem.API.csproj --configuration Release --output ./publish --runtime win-x86 --self-contained false
 
       - name: Deploy with Web Deploy
         if: github.event_name != 'pull_request'
