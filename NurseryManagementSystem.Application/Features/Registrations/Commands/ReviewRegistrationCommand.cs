@@ -78,13 +78,23 @@ namespace NurseryManagementSystem.Application.Features.Registrations.Commands
                         .AnyAsync(item => item.ChildId == child.Id && item.EndDate == null, cancellationToken);
                     if (!alreadyAssigned)
                     {
+                        var plan = await _unitOfWork.Repository<SubscriptionPlan>()
+                            .FirstOrDefaultAsync(item => item.Id == planId && item.IsActive, cancellationToken)
+                            ?? throw new NotFoundException("SubscriptionPlan", planId);
                         await _unitOfWork.Repository<ChildPlanAssignment>().AddAsync(
                             new ChildPlanAssignment
                             {
                                 ChildId = child.Id,
                                 PlanId = planId,
                                 StartDate = child.EnrollmentDate,
-                                AssignedById = reviewerId
+                                AssignedById = reviewerId,
+                                AssignedAt = _dateTime.UtcNow,
+                                PlanNameSnapshot = plan.Name,
+                                PlanCategorySnapshot = plan.Category,
+                                PriceSnapshot = plan.MonthlyFee,
+                                DurationHoursSnapshot = plan.DurationHours,
+                                DaysPerCycleSnapshot = plan.DaysPerCycle,
+                                CurrencySnapshot = plan.Currency
                             }, cancellationToken);
                     }
                 }

@@ -123,6 +123,18 @@ namespace NurseryManagementSystem.Infrastructure.Persistence
                 ALTER TABLE [MonthlyInvoices] ADD [LatePickupFinePerDay] decimal(18,2) NOT NULL CONSTRAINT [DF_Invoices_LateFine] DEFAULT 0;
             IF COL_LENGTH('MonthlyInvoices', 'OvertimeRate') IS NULL
                 ALTER TABLE [MonthlyInvoices] ADD [OvertimeRate] decimal(18,2) NOT NULL CONSTRAINT [DF_Invoices_OvertimeRate] DEFAULT 0;
+            IF COL_LENGTH('MonthlyInvoices', 'OvertimeHours') IS NULL
+                ALTER TABLE [MonthlyInvoices] ADD [OvertimeHours] decimal(18,2) NOT NULL CONSTRAINT [DF_Invoices_OvertimeHours] DEFAULT 0;
+            IF COL_LENGTH('MonthlyInvoices', 'PlanId') IS NULL
+                ALTER TABLE [MonthlyInvoices] ADD [PlanId] uniqueidentifier NULL;
+            IF COL_LENGTH('MonthlyInvoices', 'PlanName') IS NULL
+                ALTER TABLE [MonthlyInvoices] ADD [PlanName] nvarchar(150) NULL;
+            IF COL_LENGTH('MonthlyInvoices', 'Currency') IS NULL
+                ALTER TABLE [MonthlyInvoices] ADD [Currency] nvarchar(3) NOT NULL CONSTRAINT [DF_Invoices_Currency] DEFAULT N'AED';
+            IF COL_LENGTH('MonthlyInvoices', 'ParentFullName') IS NULL
+                ALTER TABLE [MonthlyInvoices] ADD [ParentFullName] nvarchar(200) NULL;
+            IF COL_LENGTH('MonthlyInvoices', 'ParentPhone') IS NULL
+                ALTER TABLE [MonthlyInvoices] ADD [ParentPhone] nvarchar(30) NULL;
 
             IF OBJECT_ID(N'NurserySettings', N'U') IS NULL
             BEGIN
@@ -197,6 +209,12 @@ namespace NurseryManagementSystem.Infrastructure.Persistence
             ALTER TABLE "MonthlyInvoices" ADD COLUMN IF NOT EXISTS "LatePickupDays" integer NOT NULL DEFAULT 0;
             ALTER TABLE "MonthlyInvoices" ADD COLUMN IF NOT EXISTS "LatePickupFinePerDay" numeric(18,2) NOT NULL DEFAULT 0;
             ALTER TABLE "MonthlyInvoices" ADD COLUMN IF NOT EXISTS "OvertimeRate" numeric(18,2) NOT NULL DEFAULT 0;
+            ALTER TABLE "MonthlyInvoices" ADD COLUMN IF NOT EXISTS "OvertimeHours" numeric(18,2) NOT NULL DEFAULT 0;
+            ALTER TABLE "MonthlyInvoices" ADD COLUMN IF NOT EXISTS "PlanId" uuid NULL;
+            ALTER TABLE "MonthlyInvoices" ADD COLUMN IF NOT EXISTS "PlanName" character varying(150) NULL;
+            ALTER TABLE "MonthlyInvoices" ADD COLUMN IF NOT EXISTS "Currency" character varying(3) NOT NULL DEFAULT 'AED';
+            ALTER TABLE "MonthlyInvoices" ADD COLUMN IF NOT EXISTS "ParentFullName" character varying(200) NULL;
+            ALTER TABLE "MonthlyInvoices" ADD COLUMN IF NOT EXISTS "ParentPhone" character varying(30) NULL;
             CREATE TABLE IF NOT EXISTS "NurserySettings" (
                 "Id" uuid NOT NULL PRIMARY KEY, "NurseryName" character varying(200) NOT NULL,
                 "Capacity" integer NOT NULL, "Currency" character varying(3) NOT NULL,

@@ -27,6 +27,12 @@ namespace NurseryManagementSystem.Domain.Entities.Billing
         public int LatePickupDays { get; set; }
         public decimal LatePickupFinePerDay { get; set; }
         public decimal OvertimeRate { get; set; }
+        public decimal OvertimeHours { get; set; }
+        public Guid? PlanId { get; set; }
+        public string? PlanName { get; set; }
+        public string Currency { get; set; } = "AED";
+        public string? ParentFullName { get; set; }
+        public string? ParentPhone { get; set; }
 
         public InvoiceStatus Status { get; set; } = InvoiceStatus.Pending;
 

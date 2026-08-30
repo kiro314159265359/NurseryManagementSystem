@@ -15,6 +15,15 @@ namespace NurseryManagementSystem.Infrastructure.Persistence.Configurations
             builder.Property(i => i.PlanFee).HasPrecision(18, 2);
             builder.Property(i => i.TotalOvertimeFee).HasPrecision(18, 2);
             builder.Property(i => i.GrandTotal).HasPrecision(18, 2);
+            builder.Property(i => i.OvertimeHours).HasPrecision(18, 2);
+            builder.Property(i => i.OvertimeRate).HasPrecision(18, 2);
+            builder.Property(i => i.LatePickupFinePerDay).HasPrecision(18, 2);
+            builder.Property(i => i.PenaltyAmount).HasPrecision(18, 2);
+            builder.Property(i => i.AdjustmentAmount).HasPrecision(18, 2);
+            builder.Property(i => i.PlanName).HasMaxLength(150);
+            builder.Property(i => i.Currency).HasMaxLength(3);
+            builder.Property(i => i.ParentFullName).HasMaxLength(200);
+            builder.Property(i => i.ParentPhone).HasMaxLength(30);
 
             builder.Property(i => i.Status).HasConversion<int>();
 

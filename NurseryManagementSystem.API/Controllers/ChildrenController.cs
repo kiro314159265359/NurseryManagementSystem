@@ -51,6 +51,7 @@ namespace NurseryManagementSystem.API.Controllers
         }
 
         [HttpPut("{id:guid}/active")]
+        [Obsolete("Use PUT /api/children/{id}/status. This compatibility endpoint will be removed in a future version.")]
         public async Task<IActionResult> SetActive(Guid id, SetChildActiveCommand command)
         {
             await Mediator.Send(command with { Id = id });

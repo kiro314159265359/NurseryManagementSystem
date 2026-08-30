@@ -72,15 +72,18 @@ namespace NurseryManagementSystem.Application.Features.Attendance.Commands
 
             if (activeAssignment?.Plan is not null)
             {
-                var overtime = attendance.HoursStayed - activeAssignment.Plan.DurationHours;
+                var allowedHours = activeAssignment.DurationHoursSnapshot > 0
+                    ? activeAssignment.DurationHoursSnapshot
+                    : activeAssignment.Plan.DurationHours;
+                var overtime = attendance.HoursStayed - allowedHours;
                 if (overtime > 0)
                 {
                     attendance.OvertimeHours = Math.Round(overtime, 2);
                     var settings = await _unitOfWork.Repository<NurserySettings>().Query()
                         .AsNoTracking().FirstOrDefaultAsync(cancellationToken);
-                    var rate = activeAssignment.Plan.DailyOvertimeFee > 0
-                        ? activeAssignment.Plan.DailyOvertimeFee
-                        : settings?.OvertimeHourlyRate ?? 0m;
+                    // Nursery settings are the canonical hourly policy. DailyOvertimeFee is
+                    // retained only for backwards-compatible plan payloads and is not billed.
+                    var rate = settings?.OvertimeHourlyRate ?? 0m;
                     attendance.OvertimeFee = Math.Round(attendance.OvertimeHours * rate, 2);
                 }
             }

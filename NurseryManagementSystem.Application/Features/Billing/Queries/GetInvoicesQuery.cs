@@ -72,6 +72,7 @@ namespace NurseryManagementSystem.Application.Features.Billing.Queries
                 .Include(i => i.Child).ThenInclude(c => c.Father)
                 .Include(i => i.Child).ThenInclude(c => c.ParentUser)
                 .Include(i => i.Child).ThenInclude(c => c.PlanAssignments).ThenInclude(a => a.Plan)
+                .Include(i => i.MarkedPaidBy)
                 .ToListAsync(cancellationToken);
 
             var items = records
@@ -88,19 +89,23 @@ namespace NurseryManagementSystem.Application.Features.Billing.Queries
                     i.MarkedPaidById,
                     $"INV-{i.BillingYear:D4}-{i.BillingMonth:D2}-{i.Id.ToString("N")[..6].ToUpperInvariant()}",
                     i.Child.FullName,
-                    i.Child.ParentUserId is not null ? i.Child.ParentUser!.FullName : i.Child.Mother.FullName,
-                    i.Child.ParentUserId is not null ? i.Child.ParentUser!.PhoneNumber : i.Child.Mother.Phone,
-                    i.Child.PlanAssignments.OrderByDescending(a => a.StartDate).Select(a => a.Plan.Currency).FirstOrDefault() ?? "AED",
+                    i.ParentFullName ?? (i.Child.ParentUserId is not null ? i.Child.ParentUser!.FullName : i.Child.Mother.FullName),
+                    i.ParentPhone ?? (i.Child.ParentUserId is not null ? i.Child.ParentUser!.PhoneNumber : i.Child.Mother.Phone),
+                    i.Currency,
                     i.Status == InvoiceStatus.Paid ? i.GrandTotal : 0m,
                     i.Status == InvoiceStatus.Paid || i.Status == InvoiceStatus.Cancelled ? 0m : i.GrandTotal,
-                    i.Child.PlanAssignments.OrderByDescending(a => a.StartDate).Select(a => a.Plan.Name).FirstOrDefault(),
+                    i.PlanName,
                     i.CreatedAt,
                     i.AdjustmentAmount,
                     i.AdjustmentReason,
                     i.PenaltyAmount,
                     i.LatePickupDays,
                     i.LatePickupFinePerDay,
-                    i.OvertimeRate))
+                    i.OvertimeRate,
+                    i.OvertimeHours,
+                    i.PlanId,
+                    new DateOnly(i.BillingYear, i.BillingMonth, 1).AddMonths(1).AddDays(4),
+                    i.MarkedPaidBy != null ? i.MarkedPaidBy.FullName : null))
                 .ToList();
 
             return new PaginatedList<InvoiceDto>(items, count, pageNumber, pageSize);

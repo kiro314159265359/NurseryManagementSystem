@@ -1,6 +1,7 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using NurseryManagementSystem.Application.Common.Interfaces;
+using NurseryManagementSystem.Application.Common.Exceptions;
 
 namespace NurseryManagementSystem.API.Controllers;
 
@@ -52,14 +53,26 @@ public class AccountController : ApiControllerBase
     [HttpPut("password")]
     public async Task<IActionResult> ChangePassword(ChangeMyPasswordRequest request, CancellationToken cancellationToken)
     {
+        if (request.NewPassword.Length < 8)
+        {
+            throw new CodedValidationException(
+                "WEAK_PASSWORD", "The new password does not meet the password policy.",
+                "newPassword", "The new password must contain at least 8 characters.");
+        }
+
         var user = await GetCurrentUser(cancellationToken);
         var result = await _identityService.ChangePasswordAsync(
             user, request.CurrentPassword, request.NewPassword);
 
         if (!result.Succeeded)
         {
-            return ValidationProblem(new ValidationProblemDetails(
-                new Dictionary<string, string[]> { ["password"] = result.Errors }));
+            var currentPasswordWrong = result.Errors.Any(error =>
+                error.Contains("incorrect", StringComparison.OrdinalIgnoreCase));
+            throw new CodedValidationException(
+                currentPasswordWrong ? "INVALID_CURRENT_PASSWORD" : "WEAK_PASSWORD",
+                currentPasswordWrong ? "The current password is incorrect." : "The new password does not meet the password policy.",
+                currentPasswordWrong ? "currentPassword" : "newPassword",
+                result.Errors);
         }
 
         return NoContent();
