@@ -64,13 +64,15 @@ namespace NurseryManagementSystem.API
                 {
                     if (context.JsonTypeInfo.Type == typeof(InvoiceDto)
                         && context.JsonPropertyInfo?.Name is string propertyName
-                        && propertyName is "planFee" or "totalOvertimeFee" or "grandTotal")
+                        && (propertyName.Equals("PlanFee", StringComparison.OrdinalIgnoreCase)
+                            || propertyName.Equals("TotalOvertimeFee", StringComparison.OrdinalIgnoreCase)
+                            || propertyName.Equals("GrandTotal", StringComparison.OrdinalIgnoreCase)))
                     {
                         schema.Deprecated = true;
-                        schema.Description = propertyName switch
+                        schema.Description = propertyName.ToLowerInvariant() switch
                         {
-                            "planFee" => "Deprecated compatibility alias. Use baseFee.",
-                            "totalOvertimeFee" => "Deprecated compatibility alias. Use overtimeAmount.",
+                            "planfee" => "Deprecated compatibility alias. Use baseFee.",
+                            "totalovertimefee" => "Deprecated compatibility alias. Use overtimeAmount.",
                             _ => "Deprecated compatibility alias. Use totalDue."
                         };
                     }
