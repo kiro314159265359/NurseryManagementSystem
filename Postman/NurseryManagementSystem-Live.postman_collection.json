@@ -1,7 +1,7 @@
 {
   "info": {
     "name": "Nursery Management System - Live Unified API",
-    "description": "Live MonsterASP API for the admin and parent Flutter applications. Login automatically stores accessToken, refreshToken, currentUserId, currentUserName, and currentRole as collection variables. No credentials are included.",
+    "description": "Live MonsterASP API for the admin and parent Flutter applications. Login automatically stores accessToken, refreshToken, currentUserId, currentUserName, and currentRole as collection variables. Invoice money fields are baseFee, overtimeAmount, and totalDue. No credentials are included.",
     "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
   },
   "auth": {

@@ -58,9 +58,9 @@ invoices freeze their plan, parent, currency, overtime rate, and penalty rate.
 Password changes return `INVALID_CURRENT_PASSWORD` for a wrong existing
 password and `WEAK_PASSWORD` when the replacement fails the 8-character policy.
 
-Canonical invoice money fields are `baseFee`, `overtimeAmount`, and `totalDue`.
-Legacy aliases `planFee`, `totalOvertimeFee`, and `grandTotal` are deprecated;
-new frontend code must read the canonical fields.
+Invoice money fields are `baseFee`, `overtimeAmount`, and `totalDue`.
+The duplicate aliases `planFee`, `totalOvertimeFee`, and `grandTotal` are not
+part of the current response contract.
 
 ## Exact round-2 response contracts
 
@@ -151,12 +151,12 @@ and father names. Invoice objects contain:
   "childId": "GUID", "childFullName": "Child Name",
   "parentFullName": "Account Owner", "parentPhone": "+201001234567",
   "billingMonth": 8, "billingYear": 2026, "planId": "GUID",
-  "planName": "Full Day", "planFee": 3000, "baseFee": 3000,
+  "planName": "Full Day", "baseFee": 3000,
   "overtimeHours": 4.5, "overtimeRate": 100,
-  "totalOvertimeFee": 450, "overtimeAmount": 450,
+  "overtimeAmount": 450,
   "latePickupDays": 2, "latePickupFinePerDay": 50, "penaltyAmount": 100,
   "adjustmentAmount": 0, "adjustmentReason": null,
-  "grandTotal": 3550, "totalDue": 3550, "amountPaid": 0,
+  "totalDue": 3550, "amountPaid": 0,
   "outstanding": 3550, "currency": "AED", "status": "Pending",
   "dueDate": "2026-09-05", "paidAt": null, "paidByName": null,
   "markedPaidById": null, "createdAt": "2026-09-01T00:00:00Z"
