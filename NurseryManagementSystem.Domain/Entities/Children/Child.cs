@@ -1,4 +1,4 @@
-﻿using NurseryManagementSystem.Domain.Common;
+using NurseryManagementSystem.Domain.Common;
 using System;
 using System.Collections.Generic;
 using NurseryManagementSystem.Domain.Entities.Attendance;
@@ -41,5 +41,6 @@ namespace NurseryManagementSystem.Domain.Entities.Children
         public ICollection<ChildAttendance> Attendances { get; set; } = new List<ChildAttendance>();
         public ICollection<ChildPlanAssignment> PlanAssignments { get; set; } = new List<ChildPlanAssignment>();
         public ICollection<MonthlyInvoice> Invoices { get; set; } = new List<MonthlyInvoice>();
+        public ICollection<ParentChild> ParentLinks { get; set; } = new List<ParentChild>();
     }
 }

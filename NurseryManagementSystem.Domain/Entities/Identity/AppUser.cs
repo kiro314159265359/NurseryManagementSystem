@@ -1,4 +1,4 @@
-﻿using Microsoft.AspNetCore.Identity;
+using Microsoft.AspNetCore.Identity;
 using NurseryManagementSystem.Domain.Enums;
 using NurseryManagementSystem.Domain.Entities.Children;
 using System;
@@ -26,5 +26,8 @@ namespace NurseryManagementSystem.Domain.Entities.Identity
 
         public ICollection<RefreshToken> RefreshTokens { get; set; }
             = new List<RefreshToken>();
+
+        public ICollection<ParentChild> Children { get; set; }
+            = new List<ParentChild>();
     }
 }
