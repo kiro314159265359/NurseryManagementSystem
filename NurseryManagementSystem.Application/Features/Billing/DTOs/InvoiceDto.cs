@@ -5,9 +5,9 @@ namespace NurseryManagementSystem.Application.Features.Billing.DTOs
         Guid ChildId,
         int BillingMonth,
         int BillingYear,
-        [property: Obsolete("Use BaseFee. Retained for backwards compatibility.")] decimal PlanFee,
-        [property: Obsolete("Use OvertimeAmount. Retained for backwards compatibility.")] decimal TotalOvertimeFee,
-        [property: Obsolete("Use TotalDue. Retained for backwards compatibility.")] decimal GrandTotal,
+        decimal BaseFee,
+        decimal OvertimeAmount,
+        decimal TotalDue,
         string Status,
         DateTime? PaidAt,
         Guid? MarkedPaidById,
@@ -29,10 +29,5 @@ namespace NurseryManagementSystem.Application.Features.Billing.DTOs
         decimal OvertimeHours = 0,
         Guid? PlanId = null,
         DateOnly? DueDate = null,
-        string? PaidByName = null)
-    {
-        public decimal BaseFee => PlanFee;
-        public decimal OvertimeAmount => TotalOvertimeFee;
-        public decimal TotalDue => GrandTotal;
-    }
+        string? PaidByName = null);
 }
