@@ -38,26 +38,26 @@ namespace NurseryManagementSystem.API.Controllers
             => Ok(await Mediator.Send(new GetInvoicesQuery(childId, status, year, month, pageNumber, pageSize, search)));
 
         [HttpGet("summary")]
-        public async Task<IActionResult> GetSummary(int month, int year, CancellationToken cancellationToken)
+        public async Task<ActionResult<BillingSummaryDto>> GetSummary(int month, int year, CancellationToken cancellationToken)
         {
             var query = _unitOfWork.Repository<MonthlyInvoice>().Query().AsNoTracking()
                 .Where(i => i.BillingMonth == month && i.BillingYear == year);
             var rows = await query.ToListAsync(cancellationToken);
-            return Ok(new
-            {
-                totalInvoiced = rows.Where(i => i.Status != InvoiceStatus.Cancelled).Sum(i => i.GrandTotal),
-                totalCollected = rows.Where(i => i.Status == InvoiceStatus.Paid).Sum(i => i.GrandTotal),
-                totalOutstanding = rows.Where(i => i.Status is InvoiceStatus.Pending or InvoiceStatus.Overdue).Sum(i => i.GrandTotal),
-                invoiceCount = rows.Count,
-                paidCount = rows.Count(i => i.Status == InvoiceStatus.Paid),
-                unpaidCount = rows.Count(i => i.Status == InvoiceStatus.Pending),
-                overdueCount = rows.Count(i => i.Status == InvoiceStatus.Overdue),
-                currency = "AED"
-            });
+            var settings = await _unitOfWork.Repository<NurserySettings>().Query()
+                .AsNoTracking().FirstOrDefaultAsync(cancellationToken);
+            return Ok(new BillingSummaryDto(
+                rows.Where(i => i.Status != InvoiceStatus.Cancelled).Sum(i => i.GrandTotal),
+                rows.Where(i => i.Status == InvoiceStatus.Paid).Sum(i => i.GrandTotal),
+                rows.Where(i => i.Status is InvoiceStatus.Pending or InvoiceStatus.Overdue).Sum(i => i.GrandTotal),
+                rows.Count,
+                rows.Count(i => i.Status == InvoiceStatus.Paid),
+                rows.Count(i => i.Status == InvoiceStatus.Pending),
+                rows.Count(i => i.Status == InvoiceStatus.Overdue),
+                settings?.Currency ?? "AED"));
         }
 
         [HttpGet("revenue")]
-        public async Task<IActionResult> GetRevenue(DateOnly from, DateOnly to, string granularity = "Month", CancellationToken cancellationToken = default)
+        public async Task<ActionResult<BillingRevenueDto>> GetRevenue(DateOnly from, DateOnly to, string granularity = "Month", CancellationToken cancellationToken = default)
         {
             var rows = await _unitOfWork.Repository<MonthlyInvoice>().Query().AsNoTracking()
                 .Where(i => i.Status == InvoiceStatus.Paid
@@ -68,8 +68,12 @@ namespace NurseryManagementSystem.API.Controllers
                     ? i.PaidAt!.Value.ToString("yyyy-MM-dd")
                     : i.PaidAt!.Value.ToString("yyyy-MM"))
                 .OrderBy(g => g.Key)
-                .Select(g => new { period = g.Key, revenue = g.Sum(i => i.GrandTotal), overtimeRevenue = g.Sum(i => i.TotalOvertimeFee) });
-            return Ok(new { points, currency = "AED" });
+                .Select(g => new BillingRevenuePointDto(
+                    g.Key, g.Sum(i => i.GrandTotal), g.Sum(i => i.TotalOvertimeFee)))
+                .ToList();
+            var settings = await _unitOfWork.Repository<NurserySettings>().Query()
+                .AsNoTracking().FirstOrDefaultAsync(cancellationToken);
+            return Ok(new BillingRevenueDto(points, settings?.Currency ?? "AED"));
         }
 
         [HttpGet("invoices/{id:guid}")]
@@ -120,4 +124,15 @@ namespace NurseryManagementSystem.API.Controllers
         decimal? PenaltyOverride,
         decimal? AdjustmentAmount,
         string Reason);
+
+    public record BillingSummaryDto(
+        decimal TotalInvoiced, decimal TotalCollected, decimal TotalOutstanding,
+        int InvoiceCount, int PaidCount, int UnpaidCount, int OverdueCount,
+        string Currency);
+
+    public record BillingRevenuePointDto(
+        string Period, decimal Revenue, decimal OvertimeRevenue);
+
+    public record BillingRevenueDto(
+        IReadOnlyList<BillingRevenuePointDto> Points, string Currency);
 }

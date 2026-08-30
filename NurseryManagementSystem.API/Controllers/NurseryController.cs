@@ -7,6 +7,7 @@ using NurseryManagementSystem.Domain.Entities.Nursery;
 namespace NurseryManagementSystem.API.Controllers;
 
 [Route("api/nursery/settings")]
+[ApiController]
 [Authorize(Roles = "SuperAdmin,SubAdmin")]
 public class NurseryController : ControllerBase
 {
