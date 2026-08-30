@@ -39,6 +39,10 @@ namespace NurseryManagementSystem.API
             {
                 problemDetails.Extensions["errors"] = validationException.Errors;
             }
+            else if (exception is CodedValidationException codedValidationException)
+            {
+                problemDetails.Extensions["errors"] = codedValidationException.Errors;
+            }
 
             if (statusCode == StatusCodes.Status500InternalServerError)
             {
@@ -56,6 +60,7 @@ namespace NurseryManagementSystem.API
 
         private static (int StatusCode, string Title, string Code) Map(Exception exception) => exception switch
         {
+            CodedValidationException e => (StatusCodes.Status400BadRequest, "Validation error", e.Code),
             ValidationException => (StatusCodes.Status400BadRequest, "Validation error", "VALIDATION_FAILED"),
             NotFoundException e when e.Message.Contains("code", StringComparison.OrdinalIgnoreCase)
                 => (StatusCodes.Status400BadRequest, "Invalid scan code", "INVALID_SCAN_CODE"),

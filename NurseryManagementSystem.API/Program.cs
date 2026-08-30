@@ -57,10 +57,14 @@ namespace NurseryManagementSystem.API
 
             builder.Services.AddExceptionHandler<GlobalExceptionHandler>();
             builder.Services.AddProblemDetails();
+            builder.Services.AddOpenApi();
 
             var app = builder.Build();
 
             app.UseExceptionHandler();
+
+            // Public machine-readable API contract used by the mobile and admin clients.
+            app.MapOpenApi("/swagger/v1/swagger.json");
 
             // CORS middleware
             app.UseCors("AllowAll");

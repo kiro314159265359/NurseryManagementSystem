@@ -25,7 +25,11 @@ namespace NurseryManagementSystem.Application.Features.Billing.DTOs
         decimal PenaltyAmount = 0,
         int LatePickupDays = 0,
         decimal LatePickupFinePerDay = 0,
-        decimal OvertimeRate = 0)
+        decimal OvertimeRate = 0,
+        decimal OvertimeHours = 0,
+        Guid? PlanId = null,
+        DateOnly? DueDate = null,
+        string? PaidByName = null)
     {
         public decimal BaseFee => PlanFee;
         public decimal OvertimeAmount => TotalOvertimeFee;

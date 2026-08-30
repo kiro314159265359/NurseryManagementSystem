@@ -16,10 +16,7 @@
   `INVALID_CREDENTIALS`, `ACCOUNT_PENDING_APPROVAL`, `ACCOUNT_DISABLED`,
   `TOKEN_EXPIRED`, `INVALID_REFRESH_TOKEN`, `FORBIDDEN_ROLE`,
   `VALIDATION_FAILED`, `NOT_FOUND`, `CONFLICT`, `INVALID_SCAN_CODE`,
-  `ALREADY_CHECKED_IN`, `NOT_CHECKED_IN`, `INVALID_CURRENT_PASSWORD`,
-  `WEAK_PASSWORD`, and `INTERNAL_ERROR`.
-- The machine-readable OpenAPI contract is public at
-  `GET /swagger/v1/swagger.json` and is the authority for exact response fields.
+  `ALREADY_CHECKED_IN`, `NOT_CHECKED_IN`, and `INTERNAL_ERROR`.
 - `/api/account/me`, `/api/account/password`, and profile update remain supported.
 - Money is emitted as JSON numbers. Currency is returned by plan/settings/finance
   endpoints and defaults to `AED`. Timestamps are UTC ISO-8601 instants.
@@ -29,8 +26,6 @@
 - Child DTOs now expose `photoUrl`, `scanCode`, `approvalStatus`, derived `status`,
   audit timestamps, emergency-contact IDs, and `currentPlan`.
 - Child status values are `Active`, `Inactive`, `Pending`, and `Rejected`.
-- `PUT /api/children/{id}/status` is canonical. The older `/active` route is
-  deprecated and retained temporarily for backwards compatibility.
 - Printed child scan codes do not expire and work for both check-in and check-out;
   regenerating a code immediately invalidates the old value.
 
@@ -47,23 +42,169 @@ New/expanded endpoints:
 | Attendance | `GET /api/attendance/today` |
 | Billing | `GET /api/billing/summary` |
 | Billing | `GET /api/billing/revenue` |
+| Billing | `PUT /api/billing/invoices/{id}/adjust` |
 | Nursery | `GET /api/nursery/settings` |
 | Nursery | `PUT /api/nursery/settings` (`SuperAdmin`) |
 | Dashboard | `GET /api/dashboard/summary` |
 | Dashboard | `GET /api/dashboard/alerts` |
 | Audit | `GET /api/audit-log` (`SuperAdmin`) |
 
+Exact request and response schemas are published at
+`GET https://nursery-management-api.runasp.net/swagger/v1/swagger.json`.
+Use `PUT /api/children/{id}/status`; `/active` is deprecated compatibility only.
+The canonical billing rule is `overtimeHourlyRate × overtimeHours`.
+`dailyOvertimeFee` is legacy and is not used for new invoices. Generated
+invoices freeze their plan, parent, currency, overtime rate, and penalty rate.
+Password changes return `INVALID_CURRENT_PASSWORD` for a wrong existing
+password and `WEAK_PASSWORD` when the replacement fails the 8-character policy.
+
+## Exact round-2 response contracts
+
+The JSON below uses representative values. Nullable fields may be `null`; no
+other field names should be invented by the client.
+
+### Child list and details
+
+`GET /api/children` is paginated and lists approved children only. `search`
+matches child name or scan code. `activeOnly=false` includes active and inactive
+approved children; pending registrations belong to `/api/registrations/pending`.
+
+```json
+{
+  "items": [{
+    "id": "GUID", "fullName": "Child Name", "dateOfBirth": "2022-01-15",
+    "enrollmentDate": "2026-08-30", "nationality": "Egyptian",
+    "religion": "", "homeAddress": "Cairo", "allergies": null,
+    "photoUrl": null, "scanCode": "CHD-...", "isActive": true,
+    "approvalStatus": "Approved", "status": "Active",
+    "createdAt": "2026-08-30T12:00:00Z",
+    "currentPlan": { "assignmentId": "GUID", "planId": "GUID",
+      "planName": "Full Day", "startDate": "2026-08-30", "durationHours": 8 }
+  }],
+  "totalCount": 1, "pageNumber": 1, "pageSize": 20, "totalPages": 1
+}
+```
+
+`GET /api/children/{id}` adds `createdBy`, `approvedAt`, `approvedBy`,
+`mother`, `father`, `agreement`, and
+`emergencyContacts[] { id, name, relationship, phone }`. Both
+`approvalStatus` and `status` are intentional: approvalStatus describes review;
+status is the operational value `Active | Inactive | Pending | Rejected`.
+
+Photo upload is multipart field `file`, maximum 5 MB, accepting
+`image/jpeg`, `image/png`, or `image/webp`; success is
+`{ "photoUrl": "https://..." }`. Scan regeneration succeeds with
+`{ "scanCode": "CHD-...", "issuedAt": "...Z" }`.
+
+### Attendance
+
+`GET /api/attendance/today?status=All|CheckedIn|CheckedOut` returns:
+
+```json
+{
+  "items": [{ "childId": "GUID", "childFullName": "Child Name",
+    "photoUrl": null, "planName": "Full Day", "allowedHours": 8,
+    "isCheckedIn": true, "checkedInAt": "2026-08-30T07:00:00Z",
+    "checkedOutAt": null, "hoursOnSite": 3.5, "overtimeHours": 0 }],
+  "totalCount": 1, "pageNumber": 1, "pageSize": 20, "totalPages": 1,
+  "summary": { "checkedIn": 18, "checkedOut": 24, "totalEnrolled": 42 }
+}
+```
+
+Summary counts are whole-roster and never page-scoped. Attendance history uses
+the plan assignment active on each record's date; `allowedHours` and server-side
+`overtimeHours` therefore do not change when the current plan changes. Manual
+check-in/out records the current server time; backdating is not supported.
+
+### Plans and assignments
+
+Plan fields are exactly: `id`, `name`, `durationHours`, `isWeekend`,
+`monthlyFee`, `dailyOvertimeFee`, `category`, `billingCycle`, `daysPerCycle`,
+`isFullDay`, `badgeText`, `isFeatured`, `isActive`, `currency`, `displayOrder`,
+and response-only alias `price`. Assigning a new plan atomically ends the open
+assignment on the day before the new start date.
+
+`GET /api/planassignments/child/{id}` returns full history newest-first:
+
+```json
+[{ "id": "GUID", "childId": "GUID", "planId": "GUID",
+  "planName": "Full Day", "planCategory": "Monthly Packages", "price": 3000,
+  "durationHours": 8, "daysPerCycle": 5, "startDate": "2026-08-30",
+  "endDate": null, "isActive": true, "assignedById": "GUID",
+  "assignedByName": "Admin", "assignedAt": "2026-08-30T12:00:00Z",
+  "currency": "AED" }]
+```
+
+### Invoices
+
+`GET /api/billing/invoices` accepts optional `childId`, `month`, `year`,
+`status`, `search`, `pageNumber`, and `pageSize`. Search covers child, mother,
+and father names. Invoice objects contain:
+
+```json
+{
+  "id": "GUID", "invoiceNumber": "INV-2026-08-ABC123",
+  "childId": "GUID", "childFullName": "Child Name",
+  "parentFullName": "Account Owner", "parentPhone": "+201001234567",
+  "billingMonth": 8, "billingYear": 2026, "planId": "GUID",
+  "planName": "Full Day", "planFee": 3000, "baseFee": 3000,
+  "overtimeHours": 4.5, "overtimeRate": 100,
+  "totalOvertimeFee": 450, "overtimeAmount": 450,
+  "latePickupDays": 2, "latePickupFinePerDay": 50, "penaltyAmount": 100,
+  "adjustmentAmount": 0, "adjustmentReason": null,
+  "grandTotal": 3550, "totalDue": 3550, "amountPaid": 0,
+  "outstanding": 3550, "currency": "AED", "status": "Pending",
+  "dueDate": "2026-09-05", "paidAt": null, "paidByName": null,
+  "markedPaidById": null, "createdAt": "2026-09-01T00:00:00Z"
+}
+```
+
+Generation returns `{ "generated": 3 }`, is idempotent per child/month, and
+only creates missing invoices for active approved children. Parent means the
+login account owner. Snapshot fields and rates never change after generation.
+
+### Registration, dashboard, schedule, and audit
+
+Pending registrations are an unpaginated array and include `childId`,
+`childFullName`, `dateOfBirth`, `enrollmentDate`, `approvalStatus`,
+`parentUserId`, `parentFullName`, `parentEmail`, `parentPhone`, `accountOwner`,
+`requestedPlanId`, `requestedPlanName`, `isFirstChild`, `rejectionReason`, and
+`submittedAt`. Approve/reject return HTTP 204. Reject reason is required and
+limited to 500 characters. Approved children become operational immediately;
+attendance works without a plan, while plan-based allowed/overtime values are
+null/zero until one is assigned.
+
+Dashboard summary fields: `date`, `checkedInNow`, `capacity`, `totalEnrolled`,
+`attendedToday`, `childHoursToday`, `overtimeHoursToday`, `revenueToday`,
+`outstandingTotal`, `unpaidInvoiceCount`, `pendingRegistrationsCount`, and
+`currency`. Dashboard alerts currently return
+`{ "items": [{ "kind": "OvertimeLive", "childId", "childFullName",
+"parentFullName", "parentPhone", "hours", "amount", "isUrgent" }] }`.
+
+Schedule times are nursery-local wall-clock values interpreted with
+`nursery.settings.timeZone`. The current schedule is one shared daily routine,
+not weekday-specific. Audit filters are `from`, `to`, `userId`, `action`,
+`pageNumber`, and `pageSize`.
+
+## Frontend completion checklist
+
+- Import the Postman collection and keep `baseUrl` unchanged for production.
+- Generate or verify models against `/swagger/v1/swagger.json`.
+- Send enum names, never their numeric values.
+- Treat all HTTP 204 responses as success without decoding JSON.
+- Use one single-flight refresh on HTTP 401, then retry the original request once.
+- Never refresh an approval-related HTTP 403.
+- Use server-computed money, overtime, status, totals, and snapshot fields.
+- Render UTC timestamps in the nursery timezone; keep date-only values unchanged.
+- Use multipart key `file` for photos and server `scanCode` for QR/barcodes.
+- Do not call deprecated `/children/{id}/active`; use `/status`.
+- Do not expose admin routes to Parent users.
+- Read Problem Details `code`, then `errors`, `detail`, and `title`.
+
 The plan contract now includes `category`, `billingCycle`, `daysPerCycle`,
 `isFullDay`, `badgeText`, `isFeatured`, `isActive`, `currency`, `displayOrder`,
 and a `price` alias for `monthlyFee`. Deleting a plan retires it (`isActive=false`)
 instead of deleting historical data.
-
-Billing policy: `nursery.settings.overtimeHourlyRate` is the canonical hourly
-rate and is multiplied by server-computed overtime hours. `dailyOvertimeFee` is
-a legacy plan field retained for payload compatibility and is not used for new
-invoices. Invoice generation is idempotent per child/month, includes approved
-active children only, and stores plan, parent, currency, overtime-rate, and
-late-pickup-rate snapshots so later edits cannot restate an issued invoice.
 
 This is the authoritative handoff for connecting the admin and parent Flutter apps to the Nursery Management System backend.
 
@@ -206,7 +347,6 @@ Approving the first child also approves the parent account. Approving a later ch
 | Health | `GET /health` | Public |
 | Auth | `POST /api/auth/login`, `/refresh` | Public |
 | Auth | `POST /api/auth/revoke` | Signed in |
-| Account | `GET /api/account/me`, `PUT /api/account/me`, `PUT /api/account/password` | Signed in |
 | Registration | `POST /api/registrations/self` | Public |
 | Registration | `POST /api/registrations/admin` | Admin roles |
 | Registration | `POST /api/registrations/children` | Parent |
@@ -231,8 +371,7 @@ Do not give Parent tokens access to admin children, attendance, billing, assignm
 - JSON uses camelCase; enum values are strings exactly as shown.
 - IDs are GUIDs. Dates use `YYYY-MM-DD`.
 - HTTP 204 has no body.
-- Errors use ASP.NET Problem Details: read stable `code`, then `detail` / `title`,
-  plus optional field-level `errors`.
+- Errors use ASP.NET Problem Details: read `status`, `title`, `detail`, and optional `errors`.
 - Store tokens in secure storage and never log passwords or tokens.
 - On HTTP 401, perform one single-flight refresh and retry once. Do not refresh on the pending-account HTTP 403 response.
 - Keep the selected account owner in form state. Show password fields on that selected parent’s step.

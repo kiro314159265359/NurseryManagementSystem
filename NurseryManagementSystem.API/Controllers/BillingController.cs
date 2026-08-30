@@ -100,7 +100,10 @@ namespace NurseryManagementSystem.API.Controllers
             var settings = await _unitOfWork.Repository<NurserySettings>().Query().AsNoTracking().FirstOrDefaultAsync(cancellationToken);
             var overtimeRate = invoice.OvertimeRate > 0 ? invoice.OvertimeRate : settings?.OvertimeHourlyRate ?? 0m;
             if (request.OvertimeHoursOverride is decimal hours)
-                invoice.TotalOvertimeFee = Math.Max(0m, hours) * overtimeRate;
+            {
+                invoice.OvertimeHours = Math.Max(0m, hours);
+                invoice.TotalOvertimeFee = invoice.OvertimeHours * overtimeRate;
+            }
             if (request.PenaltyOverride is decimal penalty)
                 invoice.PenaltyAmount = Math.Max(0m, penalty);
             invoice.AdjustmentAmount = request.AdjustmentAmount ?? 0m;

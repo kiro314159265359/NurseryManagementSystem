@@ -39,7 +39,12 @@ namespace NurseryManagementSystem.Application.Features.Billing.Commands
             var activeChildIds = await _unitOfWork.Repository<Child>().Query()
                 .AsNoTracking()
                 .Where(c => c.IsActive && c.ApprovalStatus == ApprovalStatus.Approved)
-                .Select(c => c.Id)
+                .Select(c => new
+                {
+                    c.Id,
+                    ParentFullName = c.ParentUser != null ? c.ParentUser.FullName : c.Mother.FullName,
+                    ParentPhone = c.ParentUser != null ? c.ParentUser.PhoneNumber : c.Mother.Phone
+                })
                 .ToListAsync(cancellationToken);
 
             var invoiceRepo = _unitOfWork.Repository<MonthlyInvoice>();
@@ -59,8 +64,9 @@ namespace NurseryManagementSystem.Application.Features.Billing.Commands
             var settings = await _unitOfWork.Repository<NurserySettings>().Query()
                 .AsNoTracking().FirstOrDefaultAsync(cancellationToken);
 
-            foreach (var childId in activeChildIds)
+            foreach (var child in activeChildIds)
             {
+                var childId = child.Id;
                 if (alreadyInvoicedSet.Contains(childId))
                 {
                     continue;
@@ -75,7 +81,8 @@ namespace NurseryManagementSystem.Application.Features.Billing.Commands
                     .OrderByDescending(a => a.StartDate)
                     .FirstOrDefaultAsync(cancellationToken);
 
-                var planFee = assignment?.Plan?.MonthlyFee ?? 0m;
+                var planFee = assignment is null ? 0m
+                    : assignment.PriceSnapshot > 0 ? assignment.PriceSnapshot : assignment.Plan.MonthlyFee;
 
                 var attendanceRows = await attendanceRepo.Query()
                     .AsNoTracking()
@@ -83,15 +90,13 @@ namespace NurseryManagementSystem.Application.Features.Billing.Commands
                                 && a.AttendanceDate >= startDate
                                 && a.AttendanceDate <= endDate)
                     .ToListAsync(cancellationToken);
-                var totalOvertime = attendanceRows.Sum(a => a.OvertimeFee);
+                var overtimeHours = attendanceRows.Sum(a => a.OvertimeHours);
+                var overtimeRate = settings?.OvertimeHourlyRate ?? 0m;
+                var totalOvertime = Math.Round(overtimeHours * overtimeRate, 2);
                 var graceHours = (settings?.LatePickupGraceMinutes ?? 0) / 60m;
                 var latePickupDays = attendanceRows.Count(a => a.OvertimeHours > graceHours);
                 var finePerDay = settings?.LatePickupFinePerDay ?? 0m;
                 var penaltyAmount = latePickupDays * finePerDay;
-                var overtimeRate = assignment?.Plan?.DailyOvertimeFee > 0
-                    ? assignment.Plan.DailyOvertimeFee
-                    : settings?.OvertimeHourlyRate ?? 0m;
-
                 var invoice = new MonthlyInvoice
                 {
                     ChildId = childId,
@@ -103,6 +108,16 @@ namespace NurseryManagementSystem.Application.Features.Billing.Commands
                     LatePickupDays = latePickupDays,
                     LatePickupFinePerDay = finePerDay,
                     OvertimeRate = overtimeRate,
+                    OvertimeHours = overtimeHours,
+                    PlanId = assignment?.PlanId,
+                    PlanName = assignment?.PlanNameSnapshot is { Length: > 0 }
+                        ? assignment.PlanNameSnapshot
+                        : assignment?.Plan?.Name,
+                    Currency = assignment?.CurrencySnapshot is { Length: > 0 }
+                        ? assignment.CurrencySnapshot
+                        : assignment?.Plan?.Currency ?? settings?.Currency ?? "AED",
+                    ParentFullName = child.ParentFullName,
+                    ParentPhone = child.ParentPhone,
                     GrandTotal = planFee + totalOvertime + penaltyAmount,
                     Status = InvoiceStatus.Pending
                 };
