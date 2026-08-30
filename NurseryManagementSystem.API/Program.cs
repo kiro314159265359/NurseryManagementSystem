@@ -2,6 +2,7 @@ using NurseryManagementSystem.Application;
 using NurseryManagementSystem.Infrastructure;
 using NurseryManagementSystem.Infrastructure.Persistence;
 using Microsoft.AspNetCore.Mvc;
+using NurseryManagementSystem.Application.Features.Billing.DTOs;
 
 namespace NurseryManagementSystem.API
 {
@@ -57,7 +58,26 @@ namespace NurseryManagementSystem.API
 
             builder.Services.AddExceptionHandler<GlobalExceptionHandler>();
             builder.Services.AddProblemDetails();
-            builder.Services.AddOpenApi();
+            builder.Services.AddOpenApi(options =>
+            {
+                options.AddSchemaTransformer((schema, context, cancellationToken) =>
+                {
+                    if (context.JsonTypeInfo.Type == typeof(InvoiceDto)
+                        && context.JsonPropertyInfo?.Name is string propertyName
+                        && propertyName is "planFee" or "totalOvertimeFee" or "grandTotal")
+                    {
+                        schema.Deprecated = true;
+                        schema.Description = propertyName switch
+                        {
+                            "planFee" => "Deprecated compatibility alias. Use baseFee.",
+                            "totalOvertimeFee" => "Deprecated compatibility alias. Use overtimeAmount.",
+                            _ => "Deprecated compatibility alias. Use totalDue."
+                        };
+                    }
+
+                    return Task.CompletedTask;
+                });
+            });
 
             var app = builder.Build();
 
