@@ -14,7 +14,8 @@ namespace NurseryManagementSystem.Application.Features.Billing.Queries
         int? Year = null,
         int? Month = null,
         int PageNumber = 1,
-        int PageSize = 20) : IRequest<PaginatedList<InvoiceDto>>;
+        int PageSize = 20,
+        string? Search = null) : IRequest<PaginatedList<InvoiceDto>>;
 
     public class GetInvoicesQueryHandler : IRequestHandler<GetInvoicesQuery, PaginatedList<InvoiceDto>>
     {
@@ -52,6 +53,14 @@ namespace NurseryManagementSystem.Application.Features.Billing.Queries
                 query = query.Where(i => i.BillingMonth == request.Month.Value);
             }
 
+            if (!string.IsNullOrWhiteSpace(request.Search))
+            {
+                var term = request.Search.Trim();
+                query = query.Where(i => i.Child.FullName.Contains(term)
+                    || i.Child.Mother.FullName.Contains(term)
+                    || i.Child.Father.FullName.Contains(term));
+            }
+
             var count = await query.CountAsync(cancellationToken);
 
             var records = await query
@@ -59,6 +68,10 @@ namespace NurseryManagementSystem.Application.Features.Billing.Queries
                 .ThenByDescending(i => i.BillingMonth)
                 .Skip((pageNumber - 1) * pageSize)
                 .Take(pageSize)
+                .Include(i => i.Child).ThenInclude(c => c.Mother)
+                .Include(i => i.Child).ThenInclude(c => c.Father)
+                .Include(i => i.Child).ThenInclude(c => c.ParentUser)
+                .Include(i => i.Child).ThenInclude(c => c.PlanAssignments).ThenInclude(a => a.Plan)
                 .ToListAsync(cancellationToken);
 
             var items = records
@@ -72,7 +85,22 @@ namespace NurseryManagementSystem.Application.Features.Billing.Queries
                     i.GrandTotal,
                     i.Status.ToString(),
                     i.PaidAt,
-                    i.MarkedPaidById))
+                    i.MarkedPaidById,
+                    $"INV-{i.BillingYear:D4}-{i.BillingMonth:D2}-{i.Id.ToString("N")[..6].ToUpperInvariant()}",
+                    i.Child.FullName,
+                    i.Child.ParentUserId is not null ? i.Child.ParentUser!.FullName : i.Child.Mother.FullName,
+                    i.Child.ParentUserId is not null ? i.Child.ParentUser!.PhoneNumber : i.Child.Mother.Phone,
+                    i.Child.PlanAssignments.OrderByDescending(a => a.StartDate).Select(a => a.Plan.Currency).FirstOrDefault() ?? "AED",
+                    i.Status == InvoiceStatus.Paid ? i.GrandTotal : 0m,
+                    i.Status == InvoiceStatus.Paid || i.Status == InvoiceStatus.Cancelled ? 0m : i.GrandTotal,
+                    i.Child.PlanAssignments.OrderByDescending(a => a.StartDate).Select(a => a.Plan.Name).FirstOrDefault(),
+                    i.CreatedAt,
+                    i.AdjustmentAmount,
+                    i.AdjustmentReason,
+                    i.PenaltyAmount,
+                    i.LatePickupDays,
+                    i.LatePickupFinePerDay,
+                    i.OvertimeRate))
                 .ToList();
 
             return new PaginatedList<InvoiceDto>(items, count, pageNumber, pageSize);

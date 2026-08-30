@@ -26,7 +26,7 @@ namespace NurseryManagementSystem.Application.Features.Registrations
 
         public static Child CreateChild(
             ChildRegistrationInput input,
-            Guid parentUserId,
+            Guid? parentUserId,
             ApprovalStatus approvalStatus)
         {
             return new Child
@@ -107,7 +107,7 @@ namespace NurseryManagementSystem.Application.Features.Registrations
     {
         public FamilyRegistrationInputValidator()
         {
-            RuleFor(input => input.AccountOwner).IsInEnum();
+            RuleFor(input => input.AccountOwner).NotNull().IsInEnum();
             RuleFor(input => input.Password).NotEmpty().MinimumLength(8);
             RuleFor(input => input.Child).NotNull().SetValidator(new ChildRegistrationInputValidator());
         }

@@ -30,10 +30,18 @@ namespace NurseryManagementSystem.Application.Features.PlanAssignments.Queries
                     a.Id,
                     a.ChildId,
                     a.PlanId,
-                    a.Plan.Name,
+                    a.PlanNameSnapshot == "" ? a.Plan.Name : a.PlanNameSnapshot,
+                    a.PlanCategorySnapshot == "" ? a.Plan.Category : a.PlanCategorySnapshot,
+                    a.PriceSnapshot == 0 ? a.Plan.MonthlyFee : a.PriceSnapshot,
+                    a.DurationHoursSnapshot == 0 ? a.Plan.DurationHours : a.DurationHoursSnapshot,
+                    a.DaysPerCycleSnapshot == 0 ? a.Plan.DaysPerCycle : a.DaysPerCycleSnapshot,
                     a.StartDate,
                     a.EndDate,
-                    a.AssignedById))
+                    a.EndDate == null,
+                    a.AssignedById,
+                    a.AssignedBy.FullName,
+                    a.AssignedAt,
+                    a.CurrencySnapshot == "" ? a.Plan.Currency : a.CurrencySnapshot))
                 .ToListAsync(cancellationToken);
         }
     }

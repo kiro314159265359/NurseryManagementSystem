@@ -2,6 +2,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Diagnostics;
 using NurseryManagementSystem.Application.Common.Interfaces;
 using NurseryManagementSystem.Domain.Common;
+using NurseryManagementSystem.Domain.Entities.Audit;
 
 namespace NurseryManagementSystem.Infrastructure.Persistence.Interceptors
 {
@@ -44,6 +45,28 @@ namespace NurseryManagementSystem.Infrastructure.Persistence.Interceptors
 
             var utcNow = _dateTimeProvider.UtcNow;
             var userId = _currentUserService.UserId;
+
+            var auditEntries = context.ChangeTracker.Entries<BaseEntity>()
+                .Where(entry => entry.Entity is not AuditLogEntry
+                    && entry.State is EntityState.Added or EntityState.Modified or EntityState.Deleted)
+                .Select(entry => new AuditLogEntry
+                {
+                    Id = Guid.NewGuid(),
+                    At = utcNow,
+                    ActorUserId = userId,
+                    ActorName = _currentUserService.UserName ?? "system",
+                    Action = $"{entry.Metadata.ClrType.Name}{entry.State}",
+                    SubjectType = entry.Metadata.ClrType.Name,
+                    SubjectId = entry.Entity.Id,
+                    SubjectName = entry.Properties.FirstOrDefault(p => p.Metadata.Name is "FullName" or "Name")?.CurrentValue?.ToString(),
+                    Details = entry.State.ToString()
+                })
+                .ToList();
+
+            if (auditEntries.Count > 0)
+            {
+                context.Set<AuditLogEntry>().AddRange(auditEntries);
+            }
 
             foreach (var entry in context.ChangeTracker.Entries<AuditableEntity>())
             {

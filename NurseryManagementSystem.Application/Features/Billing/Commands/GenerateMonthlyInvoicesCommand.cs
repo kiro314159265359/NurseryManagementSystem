@@ -7,6 +7,7 @@ using NurseryManagementSystem.Domain.Entities.Billing;
 using NurseryManagementSystem.Domain.Entities.Children;
 using NurseryManagementSystem.Domain.Entities.Plans;
 using NurseryManagementSystem.Domain.Enums;
+using NurseryManagementSystem.Domain.Entities.Nursery;
 
 namespace NurseryManagementSystem.Application.Features.Billing.Commands
 {
@@ -37,7 +38,7 @@ namespace NurseryManagementSystem.Application.Features.Billing.Commands
 
             var activeChildIds = await _unitOfWork.Repository<Child>().Query()
                 .AsNoTracking()
-                .Where(c => c.IsActive)
+                .Where(c => c.IsActive && c.ApprovalStatus == ApprovalStatus.Approved)
                 .Select(c => c.Id)
                 .ToListAsync(cancellationToken);
 
@@ -55,6 +56,8 @@ namespace NurseryManagementSystem.Application.Features.Billing.Commands
             var attendanceRepo = _unitOfWork.Repository<ChildAttendance>();
 
             var generated = 0;
+            var settings = await _unitOfWork.Repository<NurserySettings>().Query()
+                .AsNoTracking().FirstOrDefaultAsync(cancellationToken);
 
             foreach (var childId in activeChildIds)
             {
@@ -74,12 +77,20 @@ namespace NurseryManagementSystem.Application.Features.Billing.Commands
 
                 var planFee = assignment?.Plan?.MonthlyFee ?? 0m;
 
-                var totalOvertime = await attendanceRepo.Query()
+                var attendanceRows = await attendanceRepo.Query()
                     .AsNoTracking()
                     .Where(a => a.ChildId == childId
                                 && a.AttendanceDate >= startDate
                                 && a.AttendanceDate <= endDate)
-                    .SumAsync(a => a.OvertimeFee, cancellationToken);
+                    .ToListAsync(cancellationToken);
+                var totalOvertime = attendanceRows.Sum(a => a.OvertimeFee);
+                var graceHours = (settings?.LatePickupGraceMinutes ?? 0) / 60m;
+                var latePickupDays = attendanceRows.Count(a => a.OvertimeHours > graceHours);
+                var finePerDay = settings?.LatePickupFinePerDay ?? 0m;
+                var penaltyAmount = latePickupDays * finePerDay;
+                var overtimeRate = assignment?.Plan?.DailyOvertimeFee > 0
+                    ? assignment.Plan.DailyOvertimeFee
+                    : settings?.OvertimeHourlyRate ?? 0m;
 
                 var invoice = new MonthlyInvoice
                 {
@@ -88,7 +99,11 @@ namespace NurseryManagementSystem.Application.Features.Billing.Commands
                     BillingYear = request.Year,
                     PlanFee = planFee,
                     TotalOvertimeFee = totalOvertime,
-                    GrandTotal = planFee + totalOvertime,
+                    PenaltyAmount = penaltyAmount,
+                    LatePickupDays = latePickupDays,
+                    LatePickupFinePerDay = finePerDay,
+                    OvertimeRate = overtimeRate,
+                    GrandTotal = planFee + totalOvertime + penaltyAmount,
                     Status = InvoiceStatus.Pending
                 };
 

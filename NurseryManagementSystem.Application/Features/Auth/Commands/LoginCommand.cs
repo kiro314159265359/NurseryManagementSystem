@@ -39,9 +39,14 @@ namespace NurseryManagementSystem.Application.Features.Auth.Commands
         {
             var user = await _identityService.FindByUserNameAsync(request.UserName, cancellationToken);
 
-            if (user is null || !user.IsActive)
+            if (user is null)
             {
                 throw new UnauthorizedAccessException("Invalid credentials.");
+            }
+
+            if (!user.IsActive)
+            {
+                throw new UnauthorizedAccessException("This account is disabled.");
             }
 
             if (!await _identityService.CheckPasswordAsync(user, request.Password))

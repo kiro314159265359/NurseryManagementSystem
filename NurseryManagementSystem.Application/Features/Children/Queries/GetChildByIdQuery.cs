@@ -26,6 +26,7 @@ namespace NurseryManagementSystem.Application.Features.Children.Queries
                 .Include(c => c.Father)
                 .Include(c => c.Agreement)
                 .Include(c => c.EmergencyContacts)
+                .Include(c => c.PlanAssignments).ThenInclude(a => a.Plan)
                 .FirstOrDefaultAsync(c => c.Id == request.Id, cancellationToken);
 
             if (child is null)
@@ -42,9 +43,17 @@ namespace NurseryManagementSystem.Application.Features.Children.Queries
                 child.Religion,
                 child.HomeAddress,
                 child.Allergies,
+                child.PhotoUrl,
                 child.QrCode,
                 child.IsActive,
                 child.ApprovalStatus,
+                child.ApprovalStatus != Domain.Enums.ApprovalStatus.Approved
+                    ? child.ApprovalStatus.ToString()
+                    : child.IsActive ? "Active" : "Inactive",
+                child.CreatedAt,
+                child.CreatedBy,
+                child.ReviewedAt,
+                child.ReviewedById,
                 child.Mother is null
                     ? null
                     : new ParentDto(
@@ -76,7 +85,13 @@ namespace NurseryManagementSystem.Application.Features.Children.Queries
                         child.Agreement.AcceptedTerms),
                 child.EmergencyContacts
                     .Select(e => new EmergencyContactDto(e.Id, e.Name, e.Relationship, e.Phone))
-                    .ToList());
+                    .ToList(),
+                child.PlanAssignments
+                    .Where(a => a.EndDate == null)
+                    .OrderByDescending(a => a.StartDate)
+                    .Select(a => new CurrentPlanDto(
+                        a.Id, a.PlanId, a.Plan.Name, a.StartDate, a.Plan.DurationHours))
+                    .FirstOrDefault());
         }
     }
 }

@@ -18,9 +18,18 @@ namespace NurseryManagementSystem.Application.Features.Registrations.Commands
         : AbstractValidator<AdminCreateFamilyRegistrationCommand>
     {
         public AdminCreateFamilyRegistrationCommandValidator()
-            => RuleFor(command => command.Registration)
-                .NotNull()
-                .SetValidator(new FamilyRegistrationInputValidator());
+        {
+            RuleFor(command => command.Registration).NotNull();
+            RuleFor(command => command.Registration.Child)
+                .NotNull().SetValidator(new ChildRegistrationInputValidator());
+            When(command => command.Registration.AccountOwner is not null, () =>
+                RuleFor(command => command.Registration.AccountOwner).IsInEnum());
+            When(command => command.Registration.AccountOwner is not null
+                         && string.IsNullOrWhiteSpace(command.Registration.Password), () =>
+                RuleFor(command => command.Registration.Password)
+                    .Must(password => string.IsNullOrWhiteSpace(password) || password.Length >= 8)
+                    .WithMessage("Password must be at least 8 characters when creating a new parent account."));
+        }
     }
 
     public record SelfRegisterFamilyCommand(FamilyRegistrationInput Registration)
@@ -53,50 +62,69 @@ namespace NurseryManagementSystem.Application.Features.Registrations.Commands
         protected async Task<RegistrationCreatedDto> CreateAsync(
             FamilyRegistrationInput registration,
             ApprovalStatus approvalStatus,
+            bool allowWithoutAccount,
             CancellationToken cancellationToken)
         {
             await RegistrationSupport.EnsurePlanExistsAsync(
                 registration.Child, _unitOfWork, cancellationToken);
 
-            var (fullName, email, phone) = RegistrationSupport.GetAccountOwner(registration);
-            if (await _identityService.FindByUserNameAsync(email, cancellationToken) is not null)
-            {
-                throw new ConflictException($"An account with the email '{email}' already exists.");
-            }
+            var hasAccountOwner = registration.AccountOwner is not null;
+            if (!hasAccountOwner && !allowWithoutAccount)
+                throw new ConflictException("An account owner is required for self-registration.");
+            var owner = hasAccountOwner
+                ? RegistrationSupport.GetAccountOwner(registration)
+                : (string.Empty, string.Empty, string.Empty);
 
             await _unitOfWork.BeginTransactionAsync(cancellationToken);
             try
             {
-                var user = new AppUser
+                Guid? userId = null;
+                if (hasAccountOwner)
                 {
-                    UserName = email,
-                    Email = email,
-                    PhoneNumber = phone,
-                    FullName = fullName,
-                    Role = UserRole.Parent,
-                    ParentRelationship = registration.AccountOwner,
-                    ApprovalStatus = approvalStatus,
-                    IsActive = true,
-                    EmailConfirmed = true,
-                    QrCode = $"PAR-{Guid.NewGuid():N}"
-                };
-
-                var (result, userId) = await _identityService.CreateUserAsync(
-                    user, registration.Password, UserRole.Parent.ToString());
-                if (!result.Succeeded)
-                {
-                    throw new ConflictException(string.Join("; ", result.Errors));
+                    var existing = await _identityService.FindByUserNameAsync(owner.Item2, cancellationToken);
+                    if (existing is not null)
+                    {
+                        if (existing.Role != UserRole.Parent)
+                            throw new ConflictException("The selected email belongs to a non-parent account.");
+                        userId = existing.Id;
+                    }
+                    else
+                    {
+                        if (string.IsNullOrWhiteSpace(registration.Password) || registration.Password.Length < 8)
+                            throw new ConflictException("A password of at least 8 characters is required for a new parent account.");
+                        var user = new AppUser
+                        {
+                            UserName = owner.Item2,
+                            Email = owner.Item2,
+                            PhoneNumber = owner.Item3,
+                            FullName = owner.Item1,
+                            Role = UserRole.Parent,
+                            ParentRelationship = registration.AccountOwner,
+                            ApprovalStatus = approvalStatus,
+                            IsActive = true,
+                            EmailConfirmed = true,
+                            QrCode = $"PAR-{Guid.NewGuid():N}"
+                        };
+                        var (result, createdUserId) = await _identityService.CreateUserAsync(
+                            user, registration.Password, UserRole.Parent.ToString());
+                        if (!result.Succeeded)
+                            throw new ConflictException(string.Join("; ", result.Errors));
+                        userId = createdUserId;
+                    }
                 }
 
                 var child = RegistrationSupport.CreateChild(
                     registration.Child, userId, approvalStatus);
                 await _unitOfWork.Repository<Child>().AddAsync(child, cancellationToken);
-                await _unitOfWork.Repository<ParentChild>().AddAsync(new ParentChild
+                if (userId is Guid linkedUserId)
                 {
-                    ParentUserId = userId,
-                    ChildId = child.Id,
-                    Relationship = registration.AccountOwner.ToString()
-                }, cancellationToken);
+                    await _unitOfWork.Repository<ParentChild>().AddAsync(new ParentChild
+                    {
+                        ParentUserId = linkedUserId,
+                        ChildId = child.Id,
+                        Relationship = registration.AccountOwner?.ToString() ?? "Parent"
+                    }, cancellationToken);
+                }
 
                 if (approvalStatus == ApprovalStatus.Approved &&
                     child.RequestedPlanId is Guid planId)
@@ -116,7 +144,7 @@ namespace NurseryManagementSystem.Application.Features.Registrations.Commands
                 await _unitOfWork.SaveChangesAsync(cancellationToken);
                 await _unitOfWork.CommitTransactionAsync(cancellationToken);
 
-                return new RegistrationCreatedDto(userId, child.Id, approvalStatus);
+                return new RegistrationCreatedDto(userId ?? Guid.Empty, child.Id, approvalStatus);
             }
             catch
             {
@@ -141,7 +169,7 @@ namespace NurseryManagementSystem.Application.Features.Registrations.Commands
         public Task<RegistrationCreatedDto> Handle(
             AdminCreateFamilyRegistrationCommand request,
             CancellationToken cancellationToken)
-            => CreateAsync(request.Registration, ApprovalStatus.Approved, cancellationToken);
+            => CreateAsync(request.Registration, ApprovalStatus.Approved, true, cancellationToken);
     }
 
     public class SelfRegisterFamilyCommandHandler
@@ -159,6 +187,6 @@ namespace NurseryManagementSystem.Application.Features.Registrations.Commands
         public Task<RegistrationCreatedDto> Handle(
             SelfRegisterFamilyCommand request,
             CancellationToken cancellationToken)
-            => CreateAsync(request.Registration, ApprovalStatus.Pending, cancellationToken);
+            => CreateAsync(request.Registration, ApprovalStatus.Pending, false, cancellationToken);
     }
 }

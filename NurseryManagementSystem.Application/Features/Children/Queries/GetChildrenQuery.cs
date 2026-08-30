@@ -54,9 +54,20 @@ namespace NurseryManagementSystem.Application.Features.Children.Queries
                     c.Religion,
                     c.HomeAddress,
                     c.Allergies,
+                    c.PhotoUrl,
                     c.QrCode,
                     c.IsActive,
-                    c.ApprovalStatus));
+                    c.ApprovalStatus,
+                    c.ApprovalStatus != ApprovalStatus.Approved
+                        ? c.ApprovalStatus.ToString()
+                        : c.IsActive ? "Active" : "Inactive",
+                    c.CreatedAt,
+                    c.PlanAssignments
+                        .Where(a => a.EndDate == null)
+                        .OrderByDescending(a => a.StartDate)
+                        .Select(a => new CurrentPlanDto(
+                            a.Id, a.PlanId, a.Plan.Name, a.StartDate, a.Plan.DurationHours))
+                        .FirstOrDefault()));
 
             return await PaginatedList<ChildDto>.CreateAsync(projected, pageNumber, pageSize, cancellationToken);
         }

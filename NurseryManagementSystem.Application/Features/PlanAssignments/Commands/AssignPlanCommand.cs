@@ -46,11 +46,20 @@ namespace NurseryManagementSystem.Application.Features.PlanAssignments.Commands
                 throw new NotFoundException("Child", request.ChildId);
             }
 
-            var planExists = await _unitOfWork.Repository<SubscriptionPlan>()
-                .AnyAsync(p => p.Id == request.PlanId, cancellationToken);
-            if (!planExists)
+            var plan = await _unitOfWork.Repository<SubscriptionPlan>()
+                .FirstOrDefaultAsync(p => p.Id == request.PlanId && p.IsActive, cancellationToken);
+            if (plan is null)
             {
                 throw new NotFoundException("SubscriptionPlan", request.PlanId);
+            }
+
+            var assignmentRepository = _unitOfWork.Repository<ChildPlanAssignment>();
+            var current = await assignmentRepository.FirstOrDefaultAsync(
+                a => a.ChildId == request.ChildId && a.EndDate == null, cancellationToken);
+            if (current is not null)
+            {
+                current.EndDate = request.StartDate.AddDays(-1);
+                assignmentRepository.Update(current);
             }
 
             var assignment = new ChildPlanAssignment
@@ -58,10 +67,17 @@ namespace NurseryManagementSystem.Application.Features.PlanAssignments.Commands
                 ChildId = request.ChildId,
                 PlanId = request.PlanId,
                 StartDate = request.StartDate,
-                AssignedById = assignedById
+                AssignedById = assignedById,
+                AssignedAt = DateTime.UtcNow,
+                PlanNameSnapshot = plan.Name,
+                PlanCategorySnapshot = plan.Category,
+                PriceSnapshot = plan.MonthlyFee,
+                DurationHoursSnapshot = plan.DurationHours,
+                DaysPerCycleSnapshot = plan.DaysPerCycle,
+                CurrencySnapshot = plan.Currency
             };
 
-            await _unitOfWork.Repository<ChildPlanAssignment>().AddAsync(assignment, cancellationToken);
+            await assignmentRepository.AddAsync(assignment, cancellationToken);
             await _unitOfWork.SaveChangesAsync(cancellationToken);
 
             return assignment.Id;

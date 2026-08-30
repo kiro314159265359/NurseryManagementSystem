@@ -7,6 +7,7 @@ using NurseryManagementSystem.Application.Features.Attendance.DTOs;
 using NurseryManagementSystem.Domain.Entities.Attendance;
 using NurseryManagementSystem.Domain.Entities.Children;
 using NurseryManagementSystem.Domain.Entities.Plans;
+using NurseryManagementSystem.Domain.Entities.Nursery;
 
 namespace NurseryManagementSystem.Application.Features.Attendance.Commands
 {
@@ -75,7 +76,12 @@ namespace NurseryManagementSystem.Application.Features.Attendance.Commands
                 if (overtime > 0)
                 {
                     attendance.OvertimeHours = Math.Round(overtime, 2);
-                    attendance.OvertimeFee = activeAssignment.Plan.DailyOvertimeFee;
+                    var settings = await _unitOfWork.Repository<NurserySettings>().Query()
+                        .AsNoTracking().FirstOrDefaultAsync(cancellationToken);
+                    var rate = activeAssignment.Plan.DailyOvertimeFee > 0
+                        ? activeAssignment.Plan.DailyOvertimeFee
+                        : settings?.OvertimeHourlyRate ?? 0m;
+                    attendance.OvertimeFee = Math.Round(attendance.OvertimeHours * rate, 2);
                 }
             }
 

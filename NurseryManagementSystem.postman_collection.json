@@ -1,1021 +1,995 @@
 {
-	"info": {
-		"_postman_id": "nursery-management-system-api",
-		"name": "Nursery Management System API",
-		"description": "Complete API collection for Nursery Management System with all endpoints organized by feature",
-		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
-	},
-	"variable": [
-		{
-			"key": "baseUrl",
-			"value": "http://localhost:5293",
-			"type": "string"
-		},
-		{
-			"key": "accessToken",
-			"value": "",
-			"type": "string"
-		},
-		{
-			"key": "refreshToken",
-			"value": "",
-			"type": "string"
-		}
-	],
-	"auth": {
-		"type": "bearer",
-		"bearer": [
-			{
-				"key": "token",
-				"value": "{{accessToken}}",
-				"type": "string"
-			}
-		]
-	},
-	"item": [
-		{
-			"name": "Authentication",
-			"item": [
-				{
-					"name": "Login",
-					"request": {
-						"method": "POST",
-						"header": [
-							{
-								"key": "Content-Type",
-								"value": "application/json"
-							}
-						],
-						"body": {
-							"mode": "raw",
-							"raw": "{\n  \"userName\": \"superadmin\",\n  \"password\": \"Admin@12345\"\n}"
-						},
-						"url": {
-							"raw": "{{baseUrl}}/api/auth/login",
-							"host": ["{{baseUrl}}"],
-							"path": ["api", "auth", "login"]
-						},
-						"description": "Login with username and password to get access and refresh tokens"
-					},
-					"response": [],
-					"event": [
-						{
-							"listen": "test",
-							"script": {
-								"exec": [
-									"var jsonData = pm.response.json();",
-									"pm.collectionVariables.set(\"accessToken\", jsonData.accessToken);",
-									"pm.collectionVariables.set(\"refreshToken\", jsonData.refreshToken);",
-									"pm.test(\"Status code is 200\", function () {",
-									"    pm.response.to.have.status(200);",
-									"});",
-									"pm.test(\"Response has access token\", function () {",
-									"    pm.expect(jsonData).to.have.property('accessToken');",
-									"});",
-									"pm.test(\"Response has refresh token\", function () {",
-									"    pm.expect(jsonData).to.have.property('refreshToken');",
-									"});"
-								],
-								"type": "text/javascript"
-							}
-						}
-					]
-				},
-				{
-					"name": "Refresh Token",
-					"request": {
-						"method": "POST",
-						"header": [
-							{
-								"key": "Content-Type",
-								"value": "application/json"
-							}
-						],
-						"body": {
-							"mode": "raw",
-							"raw": "{\n  \"refreshToken\": \"{{refreshToken}}\"\n}"
-						},
-						"url": {
-							"raw": "{{baseUrl}}/api/auth/refresh",
-							"host": ["{{baseUrl}}"],
-							"path": ["api", "auth", "refresh"]
-						},
-						"description": "Refresh access token using refresh token"
-					},
-					"response": [],
-					"event": [
-						{
-							"listen": "test",
-							"script": {
-								"exec": [
-									"var jsonData = pm.response.json();",
-									"pm.collectionVariables.set(\"accessToken\", jsonData.accessToken);",
-									"pm.collectionVariables.set(\"refreshToken\", jsonData.refreshToken);",
-									"pm.test(\"Status code is 200\", function () {",
-									"    pm.response.to.have.status(200);",
-									"});"
-								],
-								"type": "text/javascript"
-							}
-						}
-					]
-				},
-				{
-					"name": "Revoke Token",
-					"request": {
-						"method": "POST",
-						"header": [
-							{
-								"key": "Content-Type",
-								"value": "application/json"
-							}
-						],
-						"body": {
-							"mode": "raw",
-							"raw": "{\n  \"refreshToken\": \"{{refreshToken}}\"\n}"
-						},
-						"url": {
-							"raw": "{{baseUrl}}/api/auth/revoke",
-							"host": ["{{baseUrl}}"],
-							"path": ["api", "auth", "revoke"]
-						},
-						"description": "Revoke refresh token (logout)"
-					},
-					"response": []
-				}
-			]
-		},
-		{
-			"name": "Users",
-			"item": [
-				{
-					"name": "Get All Users",
-					"request": {
-						"method": "GET",
-						"header": [],
-						"url": {
-							"raw": "{{baseUrl}}/api/users?page=1&pageSize=10",
-							"host": ["{{baseUrl}}"],
-							"path": ["api", "users"],
-							"query": [
-								{
-									"key": "page",
-									"value": "1"
-								},
-								{
-									"key": "pageSize",
-									"value": "10"
-								}
-							]
-						},
-						"description": "Get list of all users (SuperAdmin only)"
-					},
-					"response": []
-				},
-				{
-					"name": "Get User by ID",
-					"request": {
-						"method": "GET",
-						"header": [],
-						"url": {
-							"raw": "{{baseUrl}}/api/users/{{userId}}",
-							"host": ["{{baseUrl}}"],
-							"path": ["api", "users", "{{userId}}"]
-						},
-						"description": "Get specific user by ID"
-					},
-					"response": []
-				},
-				{
-					"name": "Create User",
-					"request": {
-						"method": "POST",
-						"header": [
-							{
-								"key": "Content-Type",
-								"value": "application/json"
-							}
-						],
-						"body": {
-							"mode": "raw",
-							"raw": "{\n  \"userName\": \"newuser\",\n  \"email\": \"user@example.com\",\n  \"password\": \"SecurePass123\",\n  \"role\": \"SubAdmin\"\n}"
-						},
-						"url": {
-							"raw": "{{baseUrl}}/api/users",
-							"host": ["{{baseUrl}}"],
-							"path": ["api", "users"]
-						},
-						"description": "Create new user (SuperAdmin only)"
-					},
-					"response": []
-				},
-				{
-					"name": "Update User",
-					"request": {
-						"method": "PUT",
-						"header": [
-							{
-								"key": "Content-Type",
-								"value": "application/json"
-							}
-						],
-						"body": {
-							"mode": "raw",
-							"raw": "{\n  \"userName\": \"updateduser\",\n  \"email\": \"updated@example.com\"\n}"
-						},
-						"url": {
-							"raw": "{{baseUrl}}/api/users/{{userId}}",
-							"host": ["{{baseUrl}}"],
-							"path": ["api", "users", "{{userId}}"]
-						},
-						"description": "Update user information"
-					},
-					"response": []
-				},
-				{
-					"name": "Assign Role",
-					"request": {
-						"method": "POST",
-						"header": [
-							{
-								"key": "Content-Type",
-								"value": "application/json"
-							}
-						],
-						"body": {
-							"mode": "raw",
-							"raw": "{\n  \"role\": \"SuperAdmin\"\n}"
-						},
-						"url": {
-							"raw": "{{baseUrl}}/api/users/{{userId}}/assign-role",
-							"host": ["{{baseUrl}}"],
-							"path": ["api", "users", "{{userId}}", "assign-role"]
-						},
-						"description": "Assign role to user (SuperAdmin only)"
-					},
-					"response": []
-				},
-				{
-					"name": "Change Password",
-					"request": {
-						"method": "POST",
-						"header": [
-							{
-								"key": "Content-Type",
-								"value": "application/json"
-							}
-						],
-						"body": {
-							"mode": "raw",
-							"raw": "{\n  \"currentPassword\": \"OldPass123\",\n  \"newPassword\": \"NewSecurePass123\"\n}"
-						},
-						"url": {
-							"raw": "{{baseUrl}}/api/users/{{userId}}/change-password",
-							"host": ["{{baseUrl}}"],
-							"path": ["api", "users", "{{userId}}", "change-password"]
-						},
-						"description": "Change user password"
-					},
-					"response": []
-				},
-				{
-					"name": "Set User Active Status",
-					"request": {
-						"method": "POST",
-						"header": [
-							{
-								"key": "Content-Type",
-								"value": "application/json"
-							}
-						],
-						"body": {
-							"mode": "raw",
-							"raw": "{\n  \"isActive\": true\n}"
-						},
-						"url": {
-							"raw": "{{baseUrl}}/api/users/{{userId}}/set-active",
-							"host": ["{{baseUrl}}"],
-							"path": ["api", "users", "{{userId}}", "set-active"]
-						},
-						"description": "Set user active status (SuperAdmin only)"
-					},
-					"response": []
-				}
-			]
-		},
-		{
-			"name": "Children",
-			"item": [
-				{
-					"name": "Get All Children",
-					"request": {
-						"method": "GET",
-						"header": [],
-						"url": {
-							"raw": "{{baseUrl}}/api/children?page=1&pageSize=10",
-							"host": ["{{baseUrl}}"],
-							"path": ["api", "children"],
-							"query": [
-								{
-									"key": "page",
-									"value": "1"
-								},
-								{
-									"key": "pageSize",
-									"value": "10"
-								}
-							]
-						},
-						"description": "Get list of all children"
-					},
-					"response": []
-				},
-				{
-					"name": "Get Child by ID",
-					"request": {
-						"method": "GET",
-						"header": [],
-						"url": {
-							"raw": "{{baseUrl}}/api/children/{{childId}}",
-							"host": ["{{baseUrl}}"],
-							"path": ["api", "children", "{{childId}}"]
-						},
-						"description": "Get specific child by ID"
-					},
-					"response": []
-				},
-				{
-					"name": "Create Child",
-					"request": {
-						"method": "POST",
-						"header": [
-							{
-								"key": "Content-Type",
-								"value": "application/json"
-							}
-						],
-						"body": {
-							"mode": "raw",
-							"raw": "{\n  \"firstName\": \"John\",\n  \"lastName\": \"Doe\",\n  \"dateOfBirth\": \"2020-01-01\",\n  \"gender\": \"Male\",\n  \"father\": {\n    \"name\": \"Father Name\",\n    \"phone\": \"1234567890\",\n    \"email\": \"father@example.com\"\n  },\n  \"mother\": {\n    \"name\": \"Mother Name\",\n    \"phone\": \"0987654321\",\n    \"email\": \"mother@example.com\"\n  }\n}"
-						},
-						"url": {
-							"raw": "{{baseUrl}}/api/children",
-							"host": ["{{baseUrl}}"],
-							"path": ["api", "children"]
-						},
-						"description": "Create new child"
-					},
-					"response": []
-				},
-				{
-					"name": "Update Child",
-					"request": {
-						"method": "PUT",
-						"header": [
-							{
-								"key": "Content-Type",
-								"value": "application/json"
-							}
-						],
-						"body": {
-							"mode": "raw",
-							"raw": "{\n  \"firstName\": \"John\",\n  \"lastName\": \"Smith\",\n  \"dateOfBirth\": \"2020-01-01\",\n  \"gender\": \"Male\",\n  \"father\": {\n    \"name\": \"Father Name\",\n    \"phone\": \"1234567890\",\n    \"email\": \"father@example.com\"\n  },\n  \"mother\": {\n    \"name\": \"Mother Name\",\n    \"phone\": \"0987654321\",\n    \"email\": \"mother@example.com\"\n  }\n}"
-						},
-						"url": {
-							"raw": "{{baseUrl}}/api/children/{{childId}}",
-							"host": ["{{baseUrl}}"],
-							"path": ["api", "children", "{{childId}}"]
-						},
-						"description": "Update child information"
-					},
-					"response": []
-				},
-				{
-					"name": "Set Child Active Status",
-					"request": {
-						"method": "POST",
-						"header": [
-							{
-								"key": "Content-Type",
-								"value": "application/json"
-							}
-						],
-						"body": {
-							"mode": "raw",
-							"raw": "{\n  \"isActive\": true\n}"
-						},
-						"url": {
-							"raw": "{{baseUrl}}/api/children/{{childId}}/set-active",
-							"host": ["{{baseUrl}}"],
-							"path": ["api", "children", "{{childId}}", "set-active"]
-						},
-						"description": "Set child active status"
-					},
-					"response": []
-				},
-				{
-					"name": "Add Emergency Contact",
-					"request": {
-						"method": "POST",
-						"header": [
-							{
-								"key": "Content-Type",
-								"value": "application/json"
-							}
-						],
-						"body": {
-							"mode": "raw",
-							"raw": "{\n  \"name\": \"Emergency Contact\",\n  \"relationship\": \"Grandparent\",\n  \"phone\": \"5555555555\"\n}"
-						},
-						"url": {
-							"raw": "{{baseUrl}}/api/children/{{childId}}/emergency-contacts",
-							"host": ["{{baseUrl}}"],
-							"path": ["api", "children", "{{childId}}", "emergency-contacts"]
-						},
-						"description": "Add emergency contact for child"
-					},
-					"response": []
-				},
-				{
-					"name": "Remove Emergency Contact",
-					"request": {
-						"method": "DELETE",
-						"header": [],
-						"url": {
-							"raw": "{{baseUrl}}/api/children/{{childId}}/emergency-contacts/{{contactId}}",
-							"host": ["{{baseUrl}}"],
-							"path": ["api", "children", "{{childId}}", "emergency-contacts", "{{contactId}}"]
-						},
-						"description": "Remove emergency contact for child"
-					},
-					"response": []
-				}
-			]
-		},
-		{
-			"name": "Plans",
-			"item": [
-				{
-					"name": "Get All Plans",
-					"request": {
-						"method": "GET",
-						"header": [],
-						"url": {
-							"raw": "{{baseUrl}}/api/plans",
-							"host": ["{{baseUrl}}"],
-							"path": ["api", "plans"]
-						},
-						"description": "Get list of all subscription plans"
-					},
-					"response": []
-				},
-				{
-					"name": "Get Plan by ID",
-					"request": {
-						"method": "GET",
-						"header": [],
-						"url": {
-							"raw": "{{baseUrl}}/api/plans/{{planId}}",
-							"host": ["{{baseUrl}}"],
-							"path": ["api", "plans", "{{planId}}"]
-						},
-						"description": "Get specific plan by ID"
-					},
-					"response": []
-				},
-				{
-					"name": "Create Plan",
-					"request": {
-						"method": "POST",
-						"header": [
-							{
-								"key": "Content-Type",
-								"value": "application/json"
-							}
-						],
-						"body": {
-							"mode": "raw",
-							"raw": "{\n  \"name\": \"Premium Plan\",\n  \"description\": \"Premium childcare plan\",\n  \"durationHours\": 10,\n  \"dailyFee\": 75.00,\n  \"dailyOvertimeFee\": 15.00\n}"
-						},
-						"url": {
-							"raw": "{{baseUrl}}/api/plans",
-							"host": ["{{baseUrl}}"],
-							"path": ["api", "plans"]
-						},
-						"description": "Create new subscription plan (SuperAdmin only)"
-					},
-					"response": []
-				},
-				{
-					"name": "Update Plan",
-					"request": {
-						"method": "PUT",
-						"header": [
-							{
-								"key": "Content-Type",
-								"value": "application/json"
-							}
-						],
-						"body": {
-							"mode": "raw",
-							"raw": "{\n  \"name\": \"Premium Plan\",\n  \"description\": \"Updated premium childcare plan\",\n  \"durationHours\": 12,\n  \"dailyFee\": 85.00,\n  \"dailyOvertimeFee\": 20.00\n}"
-						},
-						"url": {
-							"raw": "{{baseUrl}}/api/plans/{{planId}}",
-							"host": ["{{baseUrl}}"],
-							"path": ["api", "plans", "{{planId}}"]
-						},
-						"description": "Update subscription plan (SuperAdmin only)"
-					},
-					"response": []
-				},
-				{
-					"name": "Delete Plan",
-					"request": {
-						"method": "DELETE",
-						"header": [],
-						"url": {
-							"raw": "{{baseUrl}}/api/plans/{{planId}}",
-							"host": ["{{baseUrl}}"],
-							"path": ["api", "plans", "{{planId}}"]
-						},
-						"description": "Delete subscription plan (SuperAdmin only)"
-					},
-					"response": []
-				}
-			]
-		},
-		{
-			"name": "Plan Assignments",
-			"item": [
-				{
-					"name": "Get Child Plan Assignments",
-					"request": {
-						"method": "GET",
-						"header": [],
-						"url": {
-							"raw": "{{baseUrl}}/api/planassignments/child/{{childId}}",
-							"host": ["{{baseUrl}}"],
-							"path": ["api", "planassignments", "child", "{{childId}}"]
-						},
-						"description": "Get plan assignments for a specific child"
-					},
-					"response": []
-				},
-				{
-					"name": "Assign Plan to Child",
-					"request": {
-						"method": "POST",
-						"header": [
-							{
-								"key": "Content-Type",
-								"value": "application/json"
-							}
-						],
-						"body": {
-							"mode": "raw",
-							"raw": "{\n  \"childId\": \"{{childId}}\",\n  \"planId\": \"{{planId}}\",\n  \"startDate\": \"2024-01-01\"\n}"
-						},
-						"url": {
-							"raw": "{{baseUrl}}/api/planassignments",
-							"host": ["{{baseUrl}}"],
-							"path": ["api", "planassignments"]
-						},
-						"description": "Assign subscription plan to child"
-					},
-					"response": []
-				},
-				{
-					"name": "End Plan Assignment",
-					"request": {
-						"method": "POST",
-						"header": [
-							{
-								"key": "Content-Type",
-								"value": "application/json"
-							}
-						],
-						"body": {
-							"mode": "raw",
-							"raw": "{\n  \"childId\": \"{{childId}}\",\n  \"endDate\": \"2024-06-30\"\n}"
-						},
-						"url": {
-							"raw": "{{baseUrl}}/api/planassignments/end",
-							"host": ["{{baseUrl}}"],
-							"path": ["api", "planassignments", "end"]
-						},
-						"description": "End active plan assignment for child"
-					},
-					"response": []
-				}
-			]
-		},
-		{
-			"name": "Attendance",
-			"item": [
-				{
-					"name": "Child Check-In",
-					"request": {
-						"method": "POST",
-						"header": [
-							{
-								"key": "Content-Type",
-								"value": "application/json"
-							}
-						],
-						"body": {
-							"mode": "raw",
-							"raw": "{\n  \"childCode\": \"CHD-001\",\n  \"scanType\": \"QRCode\"\n}"
-						},
-						"url": {
-							"raw": "{{baseUrl}}/api/attendance/child/check-in",
-							"host": ["{{baseUrl}}"],
-							"path": ["api", "attendance", "child", "check-in"]
-						},
-						"description": "Check in a child"
-					},
-					"response": []
-				},
-				{
-					"name": "Child Check-Out",
-					"request": {
-						"method": "POST",
-						"header": [
-							{
-								"key": "Content-Type",
-								"value": "application/json"
-							}
-						],
-						"body": {
-							"mode": "raw",
-							"raw": "{\n  \"childCode\": \"CHD-001\",\n  \"scanType\": \"QRCode\"\n}"
-						},
-						"url": {
-							"raw": "{{baseUrl}}/api/attendance/child/check-out",
-							"host": ["{{baseUrl}}"],
-							"path": ["api", "attendance", "child", "check-out"]
-						},
-						"description": "Check out a child"
-					},
-					"response": []
-				},
-				{
-					"name": "Staff Check-In",
-					"request": {
-						"method": "POST",
-						"header": [
-							{
-								"key": "Content-Type",
-								"value": "application/json"
-							}
-						],
-						"body": {
-							"mode": "raw",
-							"raw": "{\n  \"staffCode\": \"STF-001\",\n  \"scanType\": \"QRCode\"\n}"
-						},
-						"url": {
-							"raw": "{{baseUrl}}/api/attendance/staff/check-in",
-							"host": ["{{baseUrl}}"],
-							"path": ["api", "attendance", "staff", "check-in"]
-						},
-						"description": "Check in a staff member"
-					},
-					"response": []
-				},
-				{
-					"name": "Staff Check-Out",
-					"request": {
-						"method": "POST",
-						"header": [
-							{
-								"key": "Content-Type",
-								"value": "application/json"
-							}
-						],
-						"body": {
-							"mode": "raw",
-							"raw": "{\n  \"staffCode\": \"STF-001\",\n  \"scanType\": \"QRCode\"\n}"
-						},
-						"url": {
-							"raw": "{{baseUrl}}/api/attendance/staff/check-out",
-							"host": ["{{baseUrl}}"],
-							"path": ["api", "attendance", "staff", "check-out"]
-						},
-						"description": "Check out a staff member"
-					},
-					"response": []
-				},
-				{
-					"name": "Get Child Attendance History",
-					"request": {
-						"method": "GET",
-						"header": [],
-						"url": {
-							"raw": "{{baseUrl}}/api/attendance/child/{{childId}}?startDate=2024-01-01&endDate=2024-12-31",
-							"host": ["{{baseUrl}}"],
-							"path": ["api", "attendance", "child", "{{childId}}"],
-							"query": [
-								{
-									"key": "startDate",
-									"value": "2024-01-01"
-								},
-								{
-									"key": "endDate",
-									"value": "2024-12-31"
-								}
-							]
-						},
-						"description": "Get attendance history for a specific child"
-					},
-					"response": []
-				},
-				{
-					"name": "Get Staff Attendance History",
-					"request": {
-						"method": "GET",
-						"header": [],
-						"url": {
-							"raw": "{{baseUrl}}/api/attendance/staff/{{staffId}}?startDate=2024-01-01&endDate=2024-12-31",
-							"host": ["{{baseUrl}}"],
-							"path": ["api", "attendance", "staff", "{{staffId}}"],
-							"query": [
-								{
-									"key": "startDate",
-									"value": "2024-01-01"
-								},
-								{
-									"key": "endDate",
-									"value": "2024-12-31"
-								}
-							]
-						},
-						"description": "Get attendance history for a specific staff member"
-					},
-					"response": []
-				}
-			]
-		},
-		{
-			"name": "Schedule",
-			"item": [
-				{
-					"name": "Get Schedule",
-					"request": {
-						"method": "GET",
-						"header": [],
-						"url": {
-							"raw": "{{baseUrl}}/api/schedule?date=2024-01-01",
-							"host": ["{{baseUrl}}"],
-							"path": ["api", "schedule"],
-							"query": [
-								{
-									"key": "date",
-									"value": "2024-01-01"
-								}
-							]
-						},
-						"description": "Get daily schedule"
-					},
-					"response": []
-				},
-				{
-					"name": "Create Schedule Slot",
-					"request": {
-						"method": "POST",
-						"header": [
-							{
-								"key": "Content-Type",
-								"value": "application/json"
-							}
-						],
-						"body": {
-							"mode": "raw",
-							"raw": "{\n  \"dayOfWeek\": \"Monday\",\n  \"startTime\": \"08:00:00\",\n  \"endTime\": \"09:00:00\",\n  \"activity\": \"Breakfast\"\n}"
-						},
-						"url": {
-							"raw": "{{baseUrl}}/api/schedule",
-							"host": ["{{baseUrl}}"],
-							"path": ["api", "schedule"]
-						},
-						"description": "Create new schedule slot"
-					},
-					"response": []
-				},
-				{
-					"name": "Update Schedule Slot",
-					"request": {
-						"method": "PUT",
-						"header": [
-							{
-								"key": "Content-Type",
-								"value": "application/json"
-							}
-						],
-						"body": {
-							"mode": "raw",
-							"raw": "{\n  \"dayOfWeek\": \"Monday\",\n  \"startTime\": \"08:30:00\",\n  \"endTime\": \"09:30:00\",\n  \"activity\": \"Breakfast\"\n}"
-						},
-						"url": {
-							"raw": "{{baseUrl}}/api/schedule/{{scheduleId}}",
-							"host": ["{{baseUrl}}"],
-							"path": ["api", "schedule", "{{scheduleId}}"]
-						},
-						"description": "Update schedule slot"
-					},
-					"response": []
-				},
-				{
-					"name": "Delete Schedule Slot",
-					"request": {
-						"method": "DELETE",
-						"header": [],
-						"url": {
-							"raw": "{{baseUrl}}/api/schedule/{{scheduleId}}",
-							"host": ["{{baseUrl}}"],
-							"path": ["api", "schedule", "{{scheduleId}}"]
-						},
-						"description": "Delete schedule slot"
-					},
-					"response": []
-				}
-			]
-		},
-		{
-			"name": "Billing",
-			"item": [
-				{
-					"name": "Get All Invoices",
-					"request": {
-						"method": "GET",
-						"header": [],
-						"url": {
-							"raw": "{{baseUrl}}/api/billing?page=1&pageSize=10&status=Pending",
-							"host": ["{{baseUrl}}"],
-							"path": ["api", "billing"],
-							"query": [
-								{
-									"key": "page",
-									"value": "1"
-								},
-								{
-									"key": "pageSize",
-									"value": "10"
-								},
-								{
-									"key": "status",
-									"value": "Pending"
-								}
-							]
-						},
-						"description": "Get list of all invoices"
-					},
-					"response": []
-				},
-				{
-					"name": "Get Invoice by ID",
-					"request": {
-						"method": "GET",
-						"header": [],
-						"url": {
-							"raw": "{{baseUrl}}/api/billing/{{invoiceId}}",
-							"host": ["{{baseUrl}}"],
-							"path": ["api", "billing", "{{invoiceId}}"]
-						},
-						"description": "Get specific invoice by ID"
-					},
-					"response": []
-				},
-				{
-					"name": "Generate Monthly Invoices",
-					"request": {
-						"method": "POST",
-						"header": [
-							{
-								"key": "Content-Type",
-								"value": "application/json"
-							}
-						],
-						"body": {
-							"mode": "raw",
-							"raw": "{\n  \"year\": 2024,\n  \"month\": 1\n}"
-						},
-						"url": {
-							"raw": "{{baseUrl}}/api/billing/generate-monthly",
-							"host": ["{{baseUrl}}"],
-							"path": ["api", "billing", "generate-monthly"]
-						},
-						"description": "Generate monthly invoices for all children"
-					},
-					"response": []
-				},
-				{
-					"name": "Mark Invoice as Paid",
-					"request": {
-						"method": "POST",
-						"header": [],
-						"url": {
-							"raw": "{{baseUrl}}/api/billing/{{invoiceId}}/mark-paid",
-							"host": ["{{baseUrl}}"],
-							"path": ["api", "billing", "{{invoiceId}}", "mark-paid"]
-						},
-						"description": "Mark invoice as paid"
-					},
-					"response": []
-				},
-				{
-					"name": "Cancel Invoice",
-					"request": {
-						"method": "POST",
-						"header": [],
-						"url": {
-							"raw": "{{baseUrl}}/api/billing/{{invoiceId}}/cancel",
-							"host": ["{{baseUrl}}"],
-							"path": ["api", "billing", "{{invoiceId}}", "cancel"]
-						},
-						"description": "Cancel invoice"
-					},
-					"response": []
-				}
-			]
-		},
-		{
-			"name": "Session Logs",
-			"item": [
-				{
-					"name": "Get Session Logs",
-					"request": {
-						"method": "GET",
-						"header": [],
-						"url": {
-							"raw": "{{baseUrl}}/api/sessionlogs?page=1&pageSize=10&startDate=2024-01-01&endDate=2024-12-31",
-							"host": ["{{baseUrl}}"],
-							"path": ["api", "sessionlogs"],
-							"query": [
-								{
-									"key": "page",
-									"value": "1"
-								},
-								{
-									"key": "pageSize",
-									"value": "10"
-								},
-								{
-									"key": "startDate",
-									"value": "2024-01-01"
-								},
-								{
-									"key": "endDate",
-									"value": "2024-12-31"
-								}
-							]
-						},
-						"description": "Get session logs (SuperAdmin only)"
-					},
-					"response": []
-				},
-				{
-					"name": "Create Session Log",
-					"request": {
-						"method": "POST",
-						"header": [
-							{
-								"key": "Content-Type",
-								"value": "application/json"
-							}
-						],
-						"body": {
-							"mode": "raw",
-							"raw": "{\n  \"childId\": \"{{childId}}\",\n  \"checkInTime\": \"2024-01-01T08:00:00Z\",\n  \"checkOutTime\": \"2024-01-01T17:00:00Z\",\n  \"notes\": \"Normal day\"\n}"
-						},
-						"url": {
-							"raw": "{{baseUrl}}/api/sessionlogs",
-							"host": ["{{baseUrl}}"],
-							"path": ["api", "sessionlogs"]
-						},
-						"description": "Create session log (SuperAdmin only)"
-					},
-					"response": []
-				}
-			]
-		},
-		{
-			"name": "Health Check",
-			"item": [
-				{
-					"name": "Health Check",
-					"request": {
-						"method": "GET",
-						"header": [],
-						"url": {
-							"raw": "{{baseUrl}}/health",
-							"host": ["{{baseUrl}}"],
-							"path": ["health"]
-						},
-						"description": "Health check endpoint for monitoring"
-					},
-					"response": []
-				}
-			]
-		}
-	]
+  "info": {
+    "name": "Nursery Management System - Live Unified API",
+    "description": "Live MonsterASP API for the admin and parent Flutter applications. Login automatically stores accessToken, refreshToken, currentUserId, currentUserName, and currentRole as collection variables. No credentials are included.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "auth": {
+    "type": "bearer",
+    "bearer": [
+      {
+        "key": "token",
+        "value": "{{accessToken}}",
+        "type": "string"
+      }
+    ]
+  },
+  "event": [
+    {
+      "listen": "prerequest",
+      "script": {
+        "type": "text/javascript",
+        "exec": [
+          "pm.request.headers.upsert({ key: 'Accept', value: 'application/json' });"
+        ]
+      }
+    }
+  ],
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "https://nursery-management-api.runasp.net",
+      "type": "string"
+    },
+    {
+      "key": "accessToken",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "refreshToken",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "loginUserName",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "loginPassword",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "parentEmail",
+      "value": "parent@example.com",
+      "type": "string"
+    },
+    {
+      "key": "parentPassword",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "currentUserId",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "currentUserName",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "currentRole",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "userId",
+      "value": "00000000-0000-0000-0000-000000000000",
+      "type": "string"
+    },
+    {
+      "key": "childId",
+      "value": "00000000-0000-0000-0000-000000000000",
+      "type": "string"
+    },
+    {
+      "key": "contactId",
+      "value": "00000000-0000-0000-0000-000000000000",
+      "type": "string"
+    },
+    {
+      "key": "planId",
+      "value": "00000000-0000-0000-0000-000000000000",
+      "type": "string"
+    },
+    {
+      "key": "assignmentId",
+      "value": "00000000-0000-0000-0000-000000000000",
+      "type": "string"
+    },
+    {
+      "key": "invoiceId",
+      "value": "00000000-0000-0000-0000-000000000000",
+      "type": "string"
+    },
+    {
+      "key": "scheduleId",
+      "value": "00000000-0000-0000-0000-000000000000",
+      "type": "string"
+    },
+    {
+      "key": "scanCode",
+      "value": "",
+      "type": "string"
+    }
+  ],
+  "item": [
+    {
+      "name": "Health",
+      "item": [
+        {
+          "name": "Health Check",
+          "request": {
+            "auth": {
+              "type": "noauth"
+            },
+            "method": "GET",
+            "url": "{{baseUrl}}/health"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('API is healthy', () => { pm.response.to.have.status(200); pm.expect(pm.response.json().status).to.eql('healthy'); });"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Parent Registration and Approval",
+      "item": [
+        {
+          "name": "Self-register Parent + First Child (Pending)",
+          "request": {
+            "auth": {
+              "type": "noauth"
+            },
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"registration\": {\n    \"accountOwner\": \"Mother\",\n    \"password\": \"{{parentPassword}}\",\n    \"child\": {\n      \"fullName\": \"Test Child\",\n      \"dateOfBirth\": \"2021-05-10\",\n      \"enrollmentDate\": \"2026-08-30\",\n      \"nationality\": \"Egyptian\",\n      \"religion\": \"Christian\",\n      \"homeAddress\": \"Test address\",\n      \"allergies\": null,\n      \"requestedPlanId\": null,\n      \"mother\": { \"phone\": \"+201001234567\", \"email\": \"{{parentEmail}}\", \"occupation\": \"Engineer\", \"jobTitle\": \"Engineer\", \"companyName\": \"Example\", \"workPhone\": \"+20212345678\", \"address\": \"Work address\", \"fullName\": \"Test Mother\" },\n      \"father\": { \"phone\": \"+201009876543\", \"email\": \"father@example.com\", \"occupation\": \"Accountant\", \"jobTitle\": \"Accountant\", \"companyName\": \"Example\", \"workPhone\": \"+20287654321\", \"address\": \"Work address\", \"fullName\": \"Test Father\" },\n      \"agreement\": { \"mediaPermission\": true, \"parentSignature\": \"Test Mother\", \"signedDate\": \"2026-08-30\", \"acceptedTerms\": true },\n      \"emergencyContacts\": [{ \"name\": \"Test Grandparent\", \"relationship\": \"Grandparent\", \"phone\": \"+201112345678\" }]\n    }\n  }\n}"
+            },
+            "url": "{{baseUrl}}/api/registrations/self",
+            "description": "Public. Change accountOwner to Father to use the father's email as the login username. Account and child remain pending."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "if (pm.response.code === 201) { const body = pm.response.json(); pm.collectionVariables.set('childId', body.childId); pm.collectionVariables.set('userId', body.parentUserId); }"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Admin Create Approved Parent + Child",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"registration\": {\n    \"accountOwner\": \"Mother\",\n    \"password\": \"{{parentPassword}}\",\n    \"child\": {\n      \"fullName\": \"Admin Registered Child\", \"dateOfBirth\": \"2021-05-10\", \"enrollmentDate\": \"2026-08-30\", \"nationality\": \"Egyptian\", \"religion\": \"Christian\", \"homeAddress\": \"Test address\", \"allergies\": null, \"requestedPlanId\": null,\n      \"mother\": { \"phone\": \"+201001234567\", \"email\": \"{{parentEmail}}\", \"occupation\": \"Engineer\", \"jobTitle\": \"Engineer\", \"companyName\": \"Example\", \"workPhone\": \"+20212345678\", \"address\": \"Work address\", \"fullName\": \"Test Mother\" },\n      \"father\": { \"phone\": \"+201009876543\", \"email\": \"father@example.com\", \"occupation\": \"Accountant\", \"jobTitle\": \"Accountant\", \"companyName\": \"Example\", \"workPhone\": \"+20287654321\", \"address\": \"Work address\", \"fullName\": \"Test Father\" },\n      \"agreement\": { \"mediaPermission\": true, \"parentSignature\": \"Test Mother\", \"signedDate\": \"2026-08-30\", \"acceptedTerms\": true }, \"emergencyContacts\": []\n    }\n  }\n}"
+            },
+            "url": "{{baseUrl}}/api/registrations/admin",
+            "description": "SuperAdmin or SubAdmin. Creates an immediately approved parent and child."
+          }
+        },
+        {
+          "name": "Parent Add Another Child (Pending)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"child\": {\n    \"fullName\": \"Second Child\", \"dateOfBirth\": \"2022-03-15\", \"enrollmentDate\": \"2026-09-01\", \"nationality\": \"Egyptian\", \"religion\": \"Christian\", \"homeAddress\": \"Test address\", \"allergies\": null, \"requestedPlanId\": null,\n    \"mother\": { \"phone\": \"+201001234567\", \"email\": \"{{parentEmail}}\", \"occupation\": \"Engineer\", \"jobTitle\": \"Engineer\", \"companyName\": \"Example\", \"workPhone\": \"+20212345678\", \"address\": \"Work address\", \"fullName\": \"Test Mother\" },\n    \"father\": { \"phone\": \"+201009876543\", \"email\": \"father@example.com\", \"occupation\": \"Accountant\", \"jobTitle\": \"Accountant\", \"companyName\": \"Example\", \"workPhone\": \"+20287654321\", \"address\": \"Work address\", \"fullName\": \"Test Father\" },\n    \"agreement\": { \"mediaPermission\": true, \"parentSignature\": \"Test Mother\", \"signedDate\": \"2026-08-30\", \"acceptedTerms\": true }, \"emergencyContacts\": []\n  }\n}"
+            },
+            "url": "{{baseUrl}}/api/registrations/children"
+          }
+        },
+        {
+          "name": "My Child Registration Statuses",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/api/registrations/mine"
+          }
+        },
+        {
+          "name": "List Pending Registrations (Admin)",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/api/registrations/pending"
+          }
+        },
+        {
+          "name": "Approve Registration (Admin)",
+          "request": {
+            "method": "PUT",
+            "url": "{{baseUrl}}/api/registrations/{{childId}}/approve"
+          }
+        },
+        {
+          "name": "Reject Registration (Admin)",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"reason\": \"Please contact the nursery to correct the submitted information.\"\n}"
+            },
+            "url": "{{baseUrl}}/api/registrations/{{childId}}/reject"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Authentication and Account",
+      "item": [
+        {
+          "name": "Login (Admin or Parent)",
+          "request": {
+            "auth": {
+              "type": "noauth"
+            },
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"userName\": \"{{loginUserName}}\",\n  \"password\": \"{{loginPassword}}\"\n}"
+            },
+            "url": "{{baseUrl}}/api/auth/login",
+            "description": "For parent accounts, userName is the email used during registration."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "if (pm.response.code === 200) {",
+                  "  const body = pm.response.json();",
+                  "  pm.collectionVariables.set('accessToken', body.accessToken);",
+                  "  pm.collectionVariables.set('refreshToken', body.refreshToken);",
+                  "  pm.collectionVariables.set('currentUserId', body.userId);",
+                  "  pm.collectionVariables.set('currentUserName', body.userName);",
+                  "  pm.collectionVariables.set('currentRole', body.role);",
+                  "}"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Refresh Token",
+          "request": {
+            "auth": {
+              "type": "noauth"
+            },
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"refreshToken\": \"{{refreshToken}}\"\n}"
+            },
+            "url": "{{baseUrl}}/api/auth/refresh"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "if (pm.response.code === 200) { const body = pm.response.json(); pm.collectionVariables.set('accessToken', body.accessToken); pm.collectionVariables.set('refreshToken', body.refreshToken); }"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Revoke Token (Logout)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"refreshToken\": \"{{refreshToken}}\"\n}"
+            },
+            "url": "{{baseUrl}}/api/auth/revoke"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "if (pm.response.code === 204) { pm.collectionVariables.set('accessToken', ''); pm.collectionVariables.set('refreshToken', ''); }"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Admin Children",
+      "item": [
+        {
+          "name": "List Children",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/api/children?pageNumber=1&pageSize=20&search=&activeOnly=false"
+          }
+        },
+        {
+          "name": "Get Child",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/api/children/{{childId}}"
+          }
+        },
+        {
+          "name": "Create Child",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"fullName\": \"Child Name\",\n  \"dateOfBirth\": \"2022-01-15\",\n  \"enrollmentDate\": \"2026-08-30\",\n  \"nationality\": \"Egyptian\",\n  \"religion\": \"\",\n  \"homeAddress\": \"Cairo\",\n  \"allergies\": null,\n  \"mother\": { \"phone\": \"+201000000001\", \"email\": \"mother@example.com\", \"occupation\": \"\", \"jobTitle\": \"\", \"companyName\": \"\", \"workPhone\": \"\", \"address\": \"Cairo\" },\n  \"father\": { \"phone\": \"+201000000002\", \"email\": \"father@example.com\", \"occupation\": \"\", \"jobTitle\": \"\", \"companyName\": \"\", \"workPhone\": \"\", \"address\": \"Cairo\" },\n  \"agreement\": { \"mediaPermission\": true, \"parentSignature\": \"Parent Name\", \"signedDate\": \"2026-08-30\", \"acceptedTerms\": true },\n  \"emergencyContacts\": []\n}"
+            },
+            "url": "{{baseUrl}}/api/children"
+          }
+        },
+        {
+          "name": "Set Child Active",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"isActive\": true\n}"
+            },
+            "url": "{{baseUrl}}/api/children/{{childId}}/active"
+          }
+        },
+        {
+          "name": "Add Emergency Contact",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Contact Name\",\n  \"relationship\": \"Relative\",\n  \"phone\": \"+201000000003\"\n}"
+            },
+            "url": "{{baseUrl}}/api/children/{{childId}}/emergency-contacts"
+          }
+        },
+        {
+          "name": "Remove Emergency Contact",
+          "request": {
+            "method": "DELETE",
+            "url": "{{baseUrl}}/api/children/{{childId}}/emergency-contacts/{{contactId}}"
+          }
+        },
+        {
+          "name": "Update Child",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"fullName\": \"Child Name\",\n  \"dateOfBirth\": \"2021-05-10\",\n  \"enrollmentDate\": \"2026-08-30\",\n  \"nationality\": \"Egyptian\",\n  \"religion\": \"\",\n  \"homeAddress\": \"Cairo\",\n  \"allergies\": null,\n  \"mother\": {\n    \"fullName\": \"Mother Name\",\n    \"phone\": \"+201000000001\",\n    \"email\": \"mother@example.com\",\n    \"occupation\": \"\",\n    \"jobTitle\": \"\",\n    \"companyName\": \"\",\n    \"workPhone\": \"\",\n    \"address\": \"Cairo\"\n  },\n  \"father\": {\n    \"fullName\": \"Father Name\",\n    \"phone\": \"+201000000002\",\n    \"email\": \"father@example.com\",\n    \"occupation\": \"\",\n    \"jobTitle\": \"\",\n    \"companyName\": \"\",\n    \"workPhone\": \"\",\n    \"address\": \"Cairo\"\n  },\n  \"agreement\": {\n    \"mediaPermission\": true,\n    \"parentSignature\": \"Parent Name\",\n    \"signedDate\": \"2026-08-30\",\n    \"acceptedTerms\": true\n  }\n}"
+            },
+            "url": "{{baseUrl}}/api/children/{{childId}}"
+          }
+        },
+        {
+          "name": "Set Child Status",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"status\": \"Active\"\n}"
+            },
+            "url": "{{baseUrl}}/api/children/{{childId}}/status"
+          }
+        },
+        {
+          "name": "Regenerate Child Scan Code",
+          "request": {
+            "method": "POST",
+            "url": "{{baseUrl}}/api/children/{{childId}}/scan-code/regenerate"
+          }
+        },
+        {
+          "name": "Upload Child Photo",
+          "request": {
+            "method": "POST",
+            "body": {
+              "mode": "formdata",
+              "formdata": [
+                {
+                  "key": "file",
+                  "type": "file",
+                  "src": []
+                }
+              ]
+            },
+            "url": "{{baseUrl}}/api/children/{{childId}}/photo"
+          }
+        },
+        {
+          "name": "Delete Child Photo",
+          "request": {
+            "method": "DELETE",
+            "url": "{{baseUrl}}/api/children/{{childId}}/photo"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Attendance",
+      "item": [
+        {
+          "name": "Child Check In",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"code\": \"{{scanCode}}\",\n  \"scanType\": 1\n}"
+            },
+            "url": "{{baseUrl}}/api/attendance/children/check-in"
+          }
+        },
+        {
+          "name": "Child Check Out",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"code\": \"{{scanCode}}\"\n}"
+            },
+            "url": "{{baseUrl}}/api/attendance/children/check-out"
+          }
+        },
+        {
+          "name": "Staff Check In",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"code\": \"{{scanCode}}\",\n  \"scanType\": 1\n}"
+            },
+            "url": "{{baseUrl}}/api/attendance/staff/check-in"
+          }
+        },
+        {
+          "name": "Staff Check Out",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"code\": \"{{scanCode}}\"\n}"
+            },
+            "url": "{{baseUrl}}/api/attendance/staff/check-out"
+          }
+        },
+        {
+          "name": "Child Attendance History",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/api/attendance/children/{{childId}}?from=2026-01-01&to=2026-12-31&pageNumber=1&pageSize=20"
+          }
+        },
+        {
+          "name": "Staff Attendance History",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/api/attendance/staff?userId={{userId}}&from=2026-01-01&to=2026-12-31&pageNumber=1&pageSize=20"
+          }
+        },
+        {
+          "name": "Manual Child Check In",
+          "request": {
+            "method": "POST",
+            "url": "{{baseUrl}}/api/attendance/children/{{childId}}/check-in"
+          }
+        },
+        {
+          "name": "Manual Child Check Out",
+          "request": {
+            "method": "POST",
+            "url": "{{baseUrl}}/api/attendance/children/{{childId}}/check-out"
+          }
+        },
+        {
+          "name": "Today Attendance Roster",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/api/attendance/today?pageNumber=1&pageSize=20&search=&status=All"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Plans and Assignments",
+      "item": [
+        {
+          "name": "List Plans",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/api/plans"
+          }
+        },
+        {
+          "name": "Get Plan",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/api/plans/{{planId}}"
+          }
+        },
+        {
+          "name": "Create Plan (SuperAdmin)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Monthly Plan\",\n  \"durationHours\": 8,\n  \"isWeekend\": false,\n  \"monthlyFee\": 3000,\n  \"dailyOvertimeFee\": 100\n}"
+            },
+            "url": "{{baseUrl}}/api/plans"
+          }
+        },
+        {
+          "name": "Update Plan (SuperAdmin)",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Monthly Plan\",\n  \"durationHours\": 8,\n  \"isWeekend\": false,\n  \"monthlyFee\": 3200,\n  \"dailyOvertimeFee\": 120\n}"
+            },
+            "url": "{{baseUrl}}/api/plans/{{planId}}"
+          }
+        },
+        {
+          "name": "Delete Plan (SuperAdmin)",
+          "request": {
+            "method": "DELETE",
+            "url": "{{baseUrl}}/api/plans/{{planId}}"
+          }
+        },
+        {
+          "name": "Assign Plan",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"childId\": \"{{childId}}\",\n  \"planId\": \"{{planId}}\",\n  \"startDate\": \"2026-08-30\"\n}"
+            },
+            "url": "{{baseUrl}}/api/planassignments"
+          }
+        },
+        {
+          "name": "End Assignment",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"endDate\": \"2026-12-31\"\n}"
+            },
+            "url": "{{baseUrl}}/api/planassignments/{{assignmentId}}/end"
+          }
+        },
+        {
+          "name": "Child Assignments",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/api/planassignments/child/{{childId}}"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Billing",
+      "item": [
+        {
+          "name": "Generate Monthly Invoices",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"month\": 8,\n  \"year\": 2026\n}"
+            },
+            "url": "{{baseUrl}}/api/billing/generate"
+          }
+        },
+        {
+          "name": "List Invoices",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/api/billing/invoices?childId={{childId}}&pageNumber=1&pageSize=20"
+          }
+        },
+        {
+          "name": "Get Invoice",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/api/billing/invoices/{{invoiceId}}"
+          }
+        },
+        {
+          "name": "Mark Invoice Paid",
+          "request": {
+            "method": "PUT",
+            "url": "{{baseUrl}}/api/billing/invoices/{{invoiceId}}/pay"
+          }
+        },
+        {
+          "name": "Cancel Invoice",
+          "request": {
+            "method": "PUT",
+            "url": "{{baseUrl}}/api/billing/invoices/{{invoiceId}}/cancel"
+          }
+        },
+        {
+          "name": "Billing Summary",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/api/billing/summary?month=8&year=2026"
+          }
+        },
+        {
+          "name": "Revenue Series",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/api/billing/revenue?from=2026-01-01&to=2026-12-31&granularity=Month"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Schedule",
+      "item": [
+        {
+          "name": "List Schedule",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/api/schedule?activeOnly=false"
+          }
+        },
+        {
+          "name": "Create Schedule Slot",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"startTime\": \"09:00:00\",\n  \"endTime\": \"10:00:00\",\n  \"activityName\": \"Learning Activity\",\n  \"description\": \"Daily activity\",\n  \"sortOrder\": 1\n}"
+            },
+            "url": "{{baseUrl}}/api/schedule"
+          }
+        },
+        {
+          "name": "Update Schedule Slot",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"startTime\": \"09:00:00\",\n  \"endTime\": \"10:00:00\",\n  \"activityName\": \"Updated Activity\",\n  \"description\": \"Updated description\",\n  \"sortOrder\": 1,\n  \"isActive\": true\n}"
+            },
+            "url": "{{baseUrl}}/api/schedule/{{scheduleId}}"
+          }
+        },
+        {
+          "name": "Delete Schedule Slot",
+          "request": {
+            "method": "DELETE",
+            "url": "{{baseUrl}}/api/schedule/{{scheduleId}}"
+          }
+        }
+      ]
+    },
+    {
+      "name": "SuperAdmin Users and Logs",
+      "item": [
+        {
+          "name": "List Users",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/api/users?pageNumber=1&pageSize=20&search="
+          }
+        },
+        {
+          "name": "Get User",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/api/users/{{userId}}"
+          }
+        },
+        {
+          "name": "Create Staff User",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"userName\": \"new-admin\",\n  \"fullName\": \"New Admin\",\n  \"password\": \"\",\n  \"role\": 2\n}"
+            },
+            "url": "{{baseUrl}}/api/users"
+          }
+        },
+        {
+          "name": "Update User",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"fullName\": \"Updated Admin\"\n}"
+            },
+            "url": "{{baseUrl}}/api/users/{{userId}}"
+          }
+        },
+        {
+          "name": "Assign Role",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"role\": 2\n}"
+            },
+            "url": "{{baseUrl}}/api/users/{{userId}}/role"
+          }
+        },
+        {
+          "name": "Set User Active",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"isActive\": true\n}"
+            },
+            "url": "{{baseUrl}}/api/users/{{userId}}/active"
+          }
+        },
+        {
+          "name": "Change User Password",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"currentPassword\": \"\",\n  \"newPassword\": \"\"\n}"
+            },
+            "url": "{{baseUrl}}/api/users/{{userId}}/password"
+          }
+        },
+        {
+          "name": "Session Logs",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/api/sessionlogs?userId={{userId}}&pageNumber=1&pageSize=20"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Nursery Settings",
+      "item": [
+        {
+          "name": "Get Nursery Settings",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/api/nursery/settings"
+          }
+        },
+        {
+          "name": "Update Nursery Settings",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"nurseryName\": \"Wildwood Nursery\",\n  \"capacity\": 50,\n  \"currency\": \"AED\",\n  \"overtimeHourlyRate\": 25,\n  \"latePickupGraceMinutes\": 15,\n  \"latePickupFinePerDay\": 50,\n  \"openingTime\": \"07:00:00\",\n  \"closingTime\": \"17:00:00\",\n  \"timeZone\": \"Asia/Dubai\"\n}"
+            },
+            "url": "{{baseUrl}}/api/nursery/settings"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Dashboard and Audit",
+      "item": [
+        {
+          "name": "Dashboard Summary",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/api/dashboard/summary"
+          }
+        },
+        {
+          "name": "Dashboard Alerts",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/api/dashboard/alerts"
+          }
+        },
+        {
+          "name": "Audit Log",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/api/audit-log?pageNumber=1&pageSize=20"
+          }
+        }
+      ]
+    }
+  ]
 }

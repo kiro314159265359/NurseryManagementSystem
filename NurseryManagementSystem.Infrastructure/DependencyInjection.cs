@@ -1,10 +1,12 @@
 using System.Text;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Identity;
+using Microsoft.AspNetCore.Http;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.IdentityModel.Tokens;
+using System.Text.Json;
 using NurseryManagementSystem.Application.Common.Interfaces;
 using NurseryManagementSystem.Domain.Entities.Identity;
 using NurseryManagementSystem.Infrastructure.Identity;
@@ -122,6 +124,41 @@ namespace NurseryManagementSystem.Infrastructure
                         IssuerSigningKey = new SymmetricSecurityKey(
                             Encoding.UTF8.GetBytes(secretKey)),
                         ClockSkew = TimeSpan.Zero
+                    };
+                    options.Events = new JwtBearerEvents
+                    {
+                        OnChallenge = async context =>
+                        {
+                            context.HandleResponse();
+                            context.Response.StatusCode = StatusCodes.Status401Unauthorized;
+                            context.Response.ContentType = "application/problem+json";
+                            var code = context.AuthenticateFailure is SecurityTokenExpiredException
+                                ? "TOKEN_EXPIRED"
+                                : "INVALID_CREDENTIALS";
+                            await context.Response.WriteAsync(JsonSerializer.Serialize(new
+                            {
+                                type = "https://httpstatuses.io/401",
+                                title = "Unauthorized",
+                                status = 401,
+                                detail = code == "TOKEN_EXPIRED"
+                                    ? "The access token has expired."
+                                    : "Authentication is required.",
+                                code
+                            }));
+                        },
+                        OnForbidden = async context =>
+                        {
+                            context.Response.StatusCode = StatusCodes.Status403Forbidden;
+                            context.Response.ContentType = "application/problem+json";
+                            await context.Response.WriteAsync(JsonSerializer.Serialize(new
+                            {
+                                type = "https://httpstatuses.io/403",
+                                title = "Forbidden",
+                                status = 403,
+                                detail = "The authenticated account does not have the required role.",
+                                code = "FORBIDDEN_ROLE"
+                            }));
+                        }
                     };
                 });
 

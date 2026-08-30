@@ -21,6 +21,12 @@ namespace NurseryManagementSystem.Domain.Entities.Billing
         public decimal TotalOvertimeFee { get; set; }
 
         public decimal GrandTotal { get; set; }
+        public decimal AdjustmentAmount { get; set; }
+        public string? AdjustmentReason { get; set; }
+        public decimal PenaltyAmount { get; set; }
+        public int LatePickupDays { get; set; }
+        public decimal LatePickupFinePerDay { get; set; }
+        public decimal OvertimeRate { get; set; }
 
         public InvoiceStatus Status { get; set; } = InvoiceStatus.Pending;
 

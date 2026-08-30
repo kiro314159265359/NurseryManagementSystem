@@ -23,7 +23,7 @@ namespace NurseryManagementSystem.API
             Exception exception,
             CancellationToken cancellationToken)
         {
-            var (statusCode, title) = Map(exception);
+            var (statusCode, title, code) = Map(exception);
 
             httpContext.Response.StatusCode = statusCode;
 
@@ -33,6 +33,7 @@ namespace NurseryManagementSystem.API
                 Title = title,
                 Detail = exception.Message
             };
+            problemDetails.Extensions["code"] = code;
 
             if (exception is ValidationException validationException)
             {
@@ -53,14 +54,26 @@ namespace NurseryManagementSystem.API
             });
         }
 
-        private static (int StatusCode, string Title) Map(Exception exception) => exception switch
+        private static (int StatusCode, string Title, string Code) Map(Exception exception) => exception switch
         {
-            ValidationException => (StatusCodes.Status400BadRequest, "Validation error"),
-            NotFoundException => (StatusCodes.Status404NotFound, "Resource not found"),
-            ConflictException => (StatusCodes.Status409Conflict, "Conflict"),
-            ForbiddenAccessException => (StatusCodes.Status403Forbidden, "Forbidden"),
-            UnauthorizedAccessException => (StatusCodes.Status401Unauthorized, "Unauthorized"),
-            _ => (StatusCodes.Status500InternalServerError, "Server error")
+            ValidationException => (StatusCodes.Status400BadRequest, "Validation error", "VALIDATION_FAILED"),
+            NotFoundException e when e.Message.Contains("code", StringComparison.OrdinalIgnoreCase)
+                => (StatusCodes.Status400BadRequest, "Invalid scan code", "INVALID_SCAN_CODE"),
+            NotFoundException => (StatusCodes.Status404NotFound, "Resource not found", "NOT_FOUND"),
+            ConflictException e when e.Message.Contains("already checked in", StringComparison.OrdinalIgnoreCase)
+                => (StatusCodes.Status409Conflict, "Conflict", "ALREADY_CHECKED_IN"),
+            ConflictException e when e.Message.Contains("no open attendance", StringComparison.OrdinalIgnoreCase)
+                => (StatusCodes.Status409Conflict, "Conflict", "NOT_CHECKED_IN"),
+            ConflictException => (StatusCodes.Status409Conflict, "Conflict", "CONFLICT"),
+            ForbiddenAccessException e when e.Message.Contains("approval", StringComparison.OrdinalIgnoreCase)
+                => (StatusCodes.Status403Forbidden, "Forbidden", "ACCOUNT_PENDING_APPROVAL"),
+            ForbiddenAccessException => (StatusCodes.Status403Forbidden, "Forbidden", "FORBIDDEN_ROLE"),
+            UnauthorizedAccessException e when e.Message.Contains("refresh token", StringComparison.OrdinalIgnoreCase)
+                => (StatusCodes.Status401Unauthorized, "Unauthorized", "INVALID_REFRESH_TOKEN"),
+            UnauthorizedAccessException e when e.Message.Contains("disabled", StringComparison.OrdinalIgnoreCase)
+                => (StatusCodes.Status403Forbidden, "Forbidden", "ACCOUNT_DISABLED"),
+            UnauthorizedAccessException => (StatusCodes.Status401Unauthorized, "Unauthorized", "INVALID_CREDENTIALS"),
+            _ => (StatusCodes.Status500InternalServerError, "Server error", "INTERNAL_ERROR")
         };
     }
 }

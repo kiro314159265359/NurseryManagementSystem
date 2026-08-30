@@ -1,70 +1,225 @@
-# Unified admin and parent API
+# Nursery Frontend Integration Guide
 
-The API at `https://nursery-management-api.runasp.net` is the single backend
-for both Flutter clients:
+> Updated 2026-08-30 after the admin-app consistency audit. The contracts in the
+> **Consistency upgrade** section below supersede older examples where they differ.
 
-- Admin: `soutAhmedTayseer/Nursery-Management-System`
-- Parent/mobile: `soutAhmedTayseer/Nursery-Parents-System`
+## Consistency upgrade
 
-## Review findings
+- Every paginated endpoint returns `items`, `totalCount`, `pageNumber`, `pageSize`, and `totalPages`.
+- JSON enums are strings. Accepted values are:
+  - `role`: `SuperAdmin`, `SubAdmin`, `Parent`
+  - `scanType`: `QRCode`, `Barcode`, `Manual`
+  - `accountOwner`: `Mother`, `Father`
+  - `approvalStatus`: `Pending`, `Approved`, `Rejected`
+  - `invoiceStatus`: `Pending`, `Paid`, `Overdue`, `Cancelled`
+- Problem Details errors include a stable `code`. Supported core codes are
+  `INVALID_CREDENTIALS`, `ACCOUNT_PENDING_APPROVAL`, `ACCOUNT_DISABLED`,
+  `TOKEN_EXPIRED`, `INVALID_REFRESH_TOKEN`, `FORBIDDEN_ROLE`,
+  `VALIDATION_FAILED`, `NOT_FOUND`, `CONFLICT`, `INVALID_SCAN_CODE`,
+  `ALREADY_CHECKED_IN`, `NOT_CHECKED_IN`, and `INTERNAL_ERROR`.
+- `/api/account/me`, `/api/account/password`, and profile update remain supported.
+- Money is emitted as JSON numbers. Currency is returned by plan/settings/finance
+  endpoints and defaults to `AED`. Timestamps are UTC ISO-8601 instants.
+- `POST /api/registrations/admin` may omit `accountOwner` and `password` to create
+  a walk-in child without a login. If the selected owner's email already belongs
+  to a parent, the child is attached to that existing account.
+- Child DTOs now expose `photoUrl`, `scanCode`, `approvalStatus`, derived `status`,
+  audit timestamps, emergency-contact IDs, and `currentPlan`.
+- Child status values are `Active`, `Inactive`, `Pending`, and `Rejected`.
+- Printed child scan codes do not expire and work for both check-in and check-out;
+  regenerating a code immediately invalidates the old value.
 
-The admin client currently uses fake/in-memory repositories for authentication,
-sessions, attendance, plans, assignments, finance, and schedule data. It also
-references a missing sibling package at `../packages/nursery_shared`, so a fresh
-clone is not self-contained. Its password-change, historical-attendance,
-dashboard-summary, and enrollment-approval flows were not fully backed by API
-contracts.
+New/expanded endpoints:
 
-The parent client currently contains presentation-only demo data and has no HTTP
-client, token storage, or API repositories.
+| Area | Endpoint |
+|---|---|
+| Children | `PUT /api/children/{id}` |
+| Children | `PUT /api/children/{id}/status` |
+| Children | `POST /api/children/{id}/scan-code/regenerate` |
+| Children | `POST` / `DELETE /api/children/{id}/photo` |
+| Attendance | `POST /api/attendance/children/{id}/check-in` |
+| Attendance | `POST /api/attendance/children/{id}/check-out` |
+| Attendance | `GET /api/attendance/today` |
+| Billing | `GET /api/billing/summary` |
+| Billing | `GET /api/billing/revenue` |
+| Nursery | `GET /api/nursery/settings` |
+| Nursery | `PUT /api/nursery/settings` (`SuperAdmin`) |
+| Dashboard | `GET /api/dashboard/summary` |
+| Dashboard | `GET /api/dashboard/alerts` |
+| Audit | `GET /api/audit-log` (`SuperAdmin`) |
 
-## Authentication and account
+The plan contract now includes `category`, `billingCycle`, `daysPerCycle`,
+`isFullDay`, `badgeText`, `isFeatured`, `isActive`, `currency`, `displayOrder`,
+and a `price` alias for `monthlyFee`. Deleting a plan retires it (`isActive=false`)
+instead of deleting historical data.
 
-| Method | Route | Role | Purpose |
-| --- | --- | --- | --- |
-| POST | `/api/auth/register-parent` | Anonymous | Create a parent account |
-| POST | `/api/auth/login` | Anonymous | Sign in (email is the parent username) |
-| POST | `/api/auth/refresh` | Anonymous | Rotate an access/refresh token pair |
-| POST | `/api/auth/revoke` | Any signed-in user | Sign out/revoke a refresh token |
-| GET | `/api/account/me` | Any signed-in user | Load the current profile |
-| PUT | `/api/account/me` | Any signed-in user | Update name and phone |
-| PUT | `/api/account/password` | Any signed-in user | Change own password |
+This is the authoritative handoff for connecting the admin and parent Flutter apps to the Nursery Management System backend.
 
-## Parent/mobile
+## Environment
 
-| Method | Route | Purpose |
-| --- | --- | --- |
-| GET | `/api/parent/children` | List the signed-in parent's children and approval states |
-| POST | `/api/parent/children` | Submit a child enrollment for admin approval |
-| GET | `/api/parent/children/{childId}/dashboard` | Home data: live attendance, plan, balance, and schedule |
-| GET | `/api/parent/children/{childId}/attendance` | Paginated attendance/history |
-| GET | `/api/parent/children/{childId}/invoices` | Paginated billing history |
-| POST | `/api/parent/children/{childId}/plans/{planId}` | Select or change a plan |
-| GET | `/api/plans` | Read available plans |
+- API host: `https://nursery-management-api.runasp.net`
+- Health check: `GET /health`
+- Backend: `https://github.com/kiro314159265359/NurseryManagementSystem`
+- Admin frontend: `https://github.com/soutAhmedTayseer/Nursery-Management-System` (`develop` is the newest source branch)
+- Parent frontend: `https://github.com/soutAhmedTayseer/Nursery-Parents-System`
 
-Every parent route verifies the child-parent link server-side. Parent tokens
-cannot call the admin children, attendance, billing, schedule, or assignment
-routes.
+Use either the host plus `/api/...` paths, or a base URL ending in `/api` plus paths without `/api`. Never produce `/api/api/...`.
 
-## Admin additions
+## Authentication
 
-| Method | Route | Purpose |
-| --- | --- | --- |
-| GET | `/api/adminDashboard` | Dashboard counts, attendance, revenue, and balances |
-| GET | `/api/adminDashboard/pending-enrollments` | Review parent enrollment submissions |
-| PUT | `/api/adminDashboard/pending-enrollments/{childId}/approve` | Approve enrollment |
+Login is `POST /api/auth/login`:
 
-Existing admin routes remain available for children, attendance, plans,
-assignments, invoices, schedules, staff accounts, and audit/session logs.
+```json
+{
+  "userName": "parent@example.com",
+  "password": "StrongPassword123!"
+}
+```
 
-## Client integration order
+For parents, the username is always the email of the selected account owner:
 
-1. Add an HTTP client with bearer-token and refresh-token handling.
-2. Replace the fake authentication repositories.
-3. Replace session/attendance repositories.
-4. Connect plans, assignments, finance, schedule, and dashboard.
-5. Connect parent registration, enrollment, home, history, billing, and profile.
+- `accountOwner: "Mother"` uses `child.mother.email`.
+- `accountOwner: "Father"` uses `child.father.email`.
 
-No database, JWT, admin, or deployment credentials belong in either Flutter
-repository. The production API URL is non-secret and may be configured at build
-time.
+Self-registration does not return tokens. A pending parent receives HTTP 403 when attempting login. After an admin approves the first child, normal login succeeds.
+
+Send authenticated requests as `Authorization: Bearer <accessToken>`.
+
+- Refresh: `POST /api/auth/refresh` with `{ "refreshToken": "..." }`
+- Revoke/sign out: `POST /api/auth/revoke` with `{ "refreshToken": "..." }`
+- Access token lifetime: 60 minutes
+- Refresh token lifetime: 7 days; refresh rotates both tokens, so store both replacements.
+
+## Five-step registration payload
+
+Submit all five screens once from the Agreement screen. Do not create the mother, father, or emergency contact with separate calls.
+
+```json
+{
+  "registration": {
+    "accountOwner": "Mother",
+    "password": "StrongPassword123!",
+    "child": {
+      "fullName": "Child Full Name",
+      "dateOfBirth": "2021-05-10",
+      "enrollmentDate": "2026-08-30",
+      "nationality": "Egyptian",
+      "religion": "Christian",
+      "homeAddress": "Home address",
+      "allergies": "Peanuts",
+      "requestedPlanId": null,
+      "mother": {
+        "phone": "+201001234567",
+        "email": "mother@example.com",
+        "occupation": "Engineer",
+        "jobTitle": "Software Engineer",
+        "companyName": "Example Company",
+        "workPhone": "+20212345678",
+        "address": "Work address",
+        "fullName": "Mother Full Name"
+      },
+      "father": {
+        "phone": "+201009876543",
+        "email": "father@example.com",
+        "occupation": "Accountant",
+        "jobTitle": "Senior Accountant",
+        "companyName": "Example Company",
+        "workPhone": "+20287654321",
+        "address": "Work address",
+        "fullName": "Father Full Name"
+      },
+      "agreement": {
+        "mediaPermission": true,
+        "parentSignature": "Parent Full Name",
+        "signedDate": "2026-08-30",
+        "acceptedTerms": true
+      },
+      "emergencyContacts": [
+        {
+          "name": "Emergency Contact Name",
+          "relationship": "Grandparent",
+          "phone": "+201112345678"
+        }
+      ]
+    }
+  }
+}
+```
+
+`requestedPlanId` may be `null`. Load selectable plans with `GET /api/plans`. Passwords require at least eight characters.
+
+## Registration flows
+
+### Admin creates parent and child
+
+`POST /api/registrations/admin` with an admin bearer token and the complete payload above.
+
+The parent and child are immediately `Approved`. The parent can log in immediately. Put password and confirm-password controls on the selected mother or father screen, but send only `registration.password`.
+
+### Parent creates their first account and child
+
+`POST /api/registrations/self` is public and uses the same complete payload.
+
+The HTTP 201 response is:
+
+```json
+{
+  "parentUserId": "GUID",
+  "childId": "GUID",
+  "approvalStatus": "Pending"
+}
+```
+
+Show a “Waiting for nursery approval” screen. Do not attempt to log the parent in automatically.
+
+### Approved parent adds another child
+
+`POST /api/registrations/children` requires a Parent token. Its body is `{ "child": { ... } }`, using exactly the same `child` object above but omitting `registration`, `accountOwner`, and `password`.
+
+Every additional child starts as `Pending`, even though the parent account is already approved.
+
+### Status and admin review
+
+- Parent status list: `GET /api/registrations/mine` (Parent)
+- Admin pending list: `GET /api/registrations/pending` (SuperAdmin or SubAdmin)
+- Approve: `PUT /api/registrations/{childId}/approve` with no body
+- Reject: `PUT /api/registrations/{childId}/reject` with `{ "reason": "Reason shown to parent" }`
+
+Approving the first child also approves the parent account. Approving a later child affects that child only. Rejected children remain visible in `/mine` with `rejectionReason` but are excluded from normal operational child lists.
+
+## Current endpoint map
+
+| Area | Route | Access |
+|---|---|---|
+| Health | `GET /health` | Public |
+| Auth | `POST /api/auth/login`, `/refresh` | Public |
+| Auth | `POST /api/auth/revoke` | Signed in |
+| Registration | `POST /api/registrations/self` | Public |
+| Registration | `POST /api/registrations/admin` | Admin roles |
+| Registration | `POST /api/registrations/children` | Parent |
+| Registration | `GET /api/registrations/mine` | Parent |
+| Registration | `GET /api/registrations/pending` | Admin roles |
+| Registration | `PUT /api/registrations/{childId}/approve` | Admin roles |
+| Registration | `PUT /api/registrations/{childId}/reject` | Admin roles |
+| Children | `/api/children...` | Admin roles |
+| Attendance | `/api/attendance...` | Admin roles |
+| Plans read | `GET /api/plans`, `GET /api/plans/{id}` | Any signed-in user |
+| Plan management | `POST`, `PUT`, `DELETE /api/plans...` | SuperAdmin |
+| Assignments | `/api/planassignments...` | Admin roles |
+| Billing | `/api/billing...` | Admin roles |
+| Schedule | `/api/schedule...` | Admin roles |
+| Users | `/api/users...` | SuperAdmin |
+| Audit | `/api/sessionlogs...` | SuperAdmin |
+
+Do not give Parent tokens access to admin children, attendance, billing, assignments, or schedule endpoints. Parent-specific read dashboards can be added separately; never expose unscoped admin lists to the Parent role.
+
+## Integration rules
+
+- JSON uses camelCase; enum values are strings exactly as shown.
+- IDs are GUIDs. Dates use `YYYY-MM-DD`.
+- HTTP 204 has no body.
+- Errors use ASP.NET Problem Details: read `status`, `title`, `detail`, and optional `errors`.
+- Store tokens in secure storage and never log passwords or tokens.
+- On HTTP 401, perform one single-flight refresh and retry once. Do not refresh on the pending-account HTTP 403 response.
+- Keep the selected account owner in form state. Show password fields on that selected parent’s step.
+- Submit once at step 5, then clear sensitive form state.

@@ -18,6 +18,10 @@ namespace NurseryManagementSystem.Infrastructure.Persistence.Configurations
 
             builder.Property(p => p.MonthlyFee).HasPrecision(18, 2);
             builder.Property(p => p.DailyOvertimeFee).HasPrecision(18, 2);
+            builder.Property(p => p.Category).HasMaxLength(150);
+            builder.Property(p => p.BillingCycle).HasMaxLength(30);
+            builder.Property(p => p.BadgeText).HasMaxLength(80);
+            builder.Property(p => p.Currency).HasMaxLength(3);
         }
     }
 }
