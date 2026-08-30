@@ -64,6 +64,7 @@ namespace NurseryManagementSystem.Application.Features.Children.Commands
                 IsActive = true,
                 Mother = new Mother
                 {
+                    FullName = request.Mother.FullName ?? string.Empty,
                     Phone = request.Mother.Phone,
                     Email = request.Mother.Email,
                     Occupation = request.Mother.Occupation,
@@ -74,6 +75,7 @@ namespace NurseryManagementSystem.Application.Features.Children.Commands
                 },
                 Father = new Father
                 {
+                    FullName = request.Father.FullName ?? string.Empty,
                     Phone = request.Father.Phone,
                     Email = request.Father.Email,
                     Occupation = request.Father.Occupation,

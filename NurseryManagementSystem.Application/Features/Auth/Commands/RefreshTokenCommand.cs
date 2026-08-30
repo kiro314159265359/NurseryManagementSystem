@@ -2,6 +2,7 @@ using FluentValidation;
 using MediatR;
 using NurseryManagementSystem.Application.Common.Interfaces;
 using NurseryManagementSystem.Application.Features.Auth.DTOs;
+using NurseryManagementSystem.Domain.Enums;
 using DomainRefreshToken = NurseryManagementSystem.Domain.Entities.Identity.RefreshToken;
 
 namespace NurseryManagementSystem.Application.Features.Auth.Commands
@@ -52,6 +53,11 @@ namespace NurseryManagementSystem.Application.Features.Auth.Commands
             if (user is null || !user.IsActive)
             {
                 throw new UnauthorizedAccessException("Invalid credentials.");
+            }
+
+            if (user.Role == UserRole.Parent && user.ApprovalStatus != ApprovalStatus.Approved)
+            {
+                throw new UnauthorizedAccessException("This parent account is not approved.");
             }
 
             existing.IsRevoked = true;

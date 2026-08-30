@@ -9,6 +9,7 @@ namespace NurseryManagementSystem.Domain.Entities.Children
     {
         public Guid ChildId { get; set; }
 
+        public string FullName { get; set; } = string.Empty;
         public string Phone { get; set; } = string.Empty;
         public string Email { get; set; } = string.Empty;
         public string Occupation { get; set; } = string.Empty;

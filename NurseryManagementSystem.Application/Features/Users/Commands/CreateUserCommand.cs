@@ -20,7 +20,9 @@ namespace NurseryManagementSystem.Application.Features.Users.Commands
             RuleFor(x => x.UserName).NotEmpty().MaximumLength(256);
             RuleFor(x => x.FullName).NotEmpty().MaximumLength(200);
             RuleFor(x => x.Password).NotEmpty().MinimumLength(8);
-            RuleFor(x => x.Role).IsInEnum();
+            RuleFor(x => x.Role)
+                .Must(role => role is UserRole.SuperAdmin or UserRole.SubAdmin)
+                .WithMessage("Staff users must have the SuperAdmin or SubAdmin role.");
         }
     }
 

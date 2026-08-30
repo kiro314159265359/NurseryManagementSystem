@@ -5,6 +5,8 @@ using NurseryManagementSystem.Domain.Entities.Attendance;
 using System.Text;
 using NurseryManagementSystem.Domain.Entities.Plans;
 using NurseryManagementSystem.Domain.Entities.Billing;
+using NurseryManagementSystem.Domain.Entities.Identity;
+using NurseryManagementSystem.Domain.Enums;
 
 namespace NurseryManagementSystem.Domain.Entities.Children
 {
@@ -21,6 +23,15 @@ namespace NurseryManagementSystem.Domain.Entities.Children
 
         public string QrCode { get; set; } = string.Empty;
         public bool IsActive { get; set; } = true;
+
+        public Guid? ParentUserId { get; set; }
+        public AppUser? ParentUser { get; set; }
+
+        public ApprovalStatus ApprovalStatus { get; set; } = ApprovalStatus.Approved;
+        public Guid? RequestedPlanId { get; set; }
+        public string? RejectionReason { get; set; }
+        public DateTime? ReviewedAt { get; set; }
+        public Guid? ReviewedById { get; set; }
 
         public Mother Mother { get; set; } = null!;
         public Father Father { get; set; } = null!;

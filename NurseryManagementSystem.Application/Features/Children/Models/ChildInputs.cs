@@ -7,7 +7,8 @@ namespace NurseryManagementSystem.Application.Features.Children.Models
         string JobTitle,
         string CompanyName,
         string WorkPhone,
-        string Address);
+        string Address,
+        string? FullName = null);
 
     public record AgreementInput(
         bool MediaPermission,

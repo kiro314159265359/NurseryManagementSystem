@@ -1,8 +1,10 @@
 using FluentValidation;
 using MediatR;
+using NurseryManagementSystem.Application.Common.Exceptions;
 using NurseryManagementSystem.Application.Common.Interfaces;
 using NurseryManagementSystem.Application.Features.Auth.DTOs;
 using NurseryManagementSystem.Domain.Entities.Identity;
+using NurseryManagementSystem.Domain.Enums;
 
 namespace NurseryManagementSystem.Application.Features.Auth.Commands
 {
@@ -45,6 +47,14 @@ namespace NurseryManagementSystem.Application.Features.Auth.Commands
             if (!await _identityService.CheckPasswordAsync(user, request.Password))
             {
                 throw new UnauthorizedAccessException("Invalid credentials.");
+            }
+
+            if (user.Role == UserRole.Parent && user.ApprovalStatus != ApprovalStatus.Approved)
+            {
+                var message = user.ApprovalStatus == ApprovalStatus.Pending
+                    ? "Your account is waiting for admin approval."
+                    : "Your registration was rejected. Contact the nursery for assistance.";
+                throw new ForbiddenAccessException(message);
             }
 
             var roles = await _identityService.GetRolesAsync(user);
