@@ -6,7 +6,7 @@ using NurseryManagementSystem.Application.Features.Schedule.Queries;
 
 namespace NurseryManagementSystem.API.Controllers
 {
-    [Authorize]
+    [Authorize(Roles = "SuperAdmin,SubAdmin")]
     public class ScheduleController : ApiControllerBase
     {
         [HttpGet]

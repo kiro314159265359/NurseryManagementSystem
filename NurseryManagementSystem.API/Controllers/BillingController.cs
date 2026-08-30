@@ -8,7 +8,7 @@ using NurseryManagementSystem.Domain.Enums;
 
 namespace NurseryManagementSystem.API.Controllers
 {
-    [Authorize]
+    [Authorize(Roles = "SuperAdmin,SubAdmin")]
     public class BillingController : ApiControllerBase
     {
         [HttpPost("generate")]

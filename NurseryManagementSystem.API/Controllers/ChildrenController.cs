@@ -7,7 +7,7 @@ using NurseryManagementSystem.Application.Features.Children.Queries;
 
 namespace NurseryManagementSystem.API.Controllers
 {
-    [Authorize]
+    [Authorize(Roles = "SuperAdmin,SubAdmin")]
     public class ChildrenController : ApiControllerBase
     {
         [HttpGet]

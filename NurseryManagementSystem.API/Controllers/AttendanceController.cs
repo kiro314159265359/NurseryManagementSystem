@@ -7,7 +7,7 @@ using NurseryManagementSystem.Application.Features.Attendance.Queries;
 
 namespace NurseryManagementSystem.API.Controllers
 {
-    [Authorize]
+    [Authorize(Roles = "SuperAdmin,SubAdmin")]
     public class AttendanceController : ApiControllerBase
     {
         [HttpPost("children/check-in")]
