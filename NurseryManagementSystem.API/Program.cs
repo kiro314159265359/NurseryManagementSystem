@@ -1,6 +1,7 @@
 using NurseryManagementSystem.Application;
 using NurseryManagementSystem.Infrastructure;
 using NurseryManagementSystem.Infrastructure.Persistence;
+using Microsoft.AspNetCore.Mvc;
 
 namespace NurseryManagementSystem.API
 {
@@ -15,6 +16,30 @@ namespace NurseryManagementSystem.API
                 .AddJsonOptions(options =>
                     options.JsonSerializerOptions.Converters.Add(
                         new System.Text.Json.Serialization.JsonStringEnumConverter()));
+            builder.Services.Configure<ApiBehaviorOptions>(options =>
+            {
+                options.InvalidModelStateResponseFactory = context =>
+                {
+                    var errors = context.ModelState
+                        .Where(entry => entry.Value?.Errors.Count > 0)
+                        .ToDictionary(
+                            entry => entry.Key,
+                            entry => entry.Value!.Errors
+                                .Select(error => string.IsNullOrWhiteSpace(error.ErrorMessage)
+                                    ? "The supplied value is invalid."
+                                    : error.ErrorMessage)
+                                .ToArray());
+                    return new BadRequestObjectResult(new
+                    {
+                        type = "https://httpstatuses.io/400",
+                        title = "Validation error",
+                        status = 400,
+                        detail = "One or more validation failures have occurred.",
+                        code = "VALIDATION_FAILED",
+                        errors
+                    });
+                };
+            });
 
             // CORS configuration for frontend
             builder.Services.AddCors(options =>
