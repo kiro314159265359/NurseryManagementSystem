@@ -6,7 +6,7 @@ using NurseryManagementSystem.Application.Features.PlanAssignments.Queries;
 
 namespace NurseryManagementSystem.API.Controllers
 {
-    [Authorize]
+    [Authorize(Roles = "SuperAdmin,SubAdmin")]
     public class PlanAssignmentsController : ApiControllerBase
     {
         [HttpPost]
