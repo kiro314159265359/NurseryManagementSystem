@@ -64,6 +64,9 @@ a legacy plan field retained for payload compatibility and is not used for new
 invoices. Invoice generation is idempotent per child/month, includes approved
 active children only, and stores plan, parent, currency, overtime-rate, and
 late-pickup-rate snapshots so later edits cannot restate an issued invoice.
+The canonical invoice money fields are `baseFee`, `overtimeAmount`, and
+`totalDue`. The older aliases `planFee`, `totalOvertimeFee`, and `grandTotal`
+remain temporarily for backwards compatibility and are deprecated in OpenAPI.
 
 This is the authoritative handoff for connecting the admin and parent Flutter apps to the Nursery Management System backend.
 

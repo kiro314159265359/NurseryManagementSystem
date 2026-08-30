@@ -58,6 +58,10 @@ invoices freeze their plan, parent, currency, overtime rate, and penalty rate.
 Password changes return `INVALID_CURRENT_PASSWORD` for a wrong existing
 password and `WEAK_PASSWORD` when the replacement fails the 8-character policy.
 
+Canonical invoice money fields are `baseFee`, `overtimeAmount`, and `totalDue`.
+Legacy aliases `planFee`, `totalOvertimeFee`, and `grandTotal` are deprecated;
+new frontend code must read the canonical fields.
+
 ## Exact round-2 response contracts
 
 The JSON below uses representative values. Nullable fields may be `null`; no

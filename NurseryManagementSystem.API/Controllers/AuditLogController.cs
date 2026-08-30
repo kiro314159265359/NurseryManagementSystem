@@ -8,6 +8,7 @@ using NurseryManagementSystem.Domain.Entities.Audit;
 namespace NurseryManagementSystem.API.Controllers;
 
 [Route("api/audit-log")]
+[ApiController]
 [Authorize(Roles = "SuperAdmin")]
 public class AuditLogController : ControllerBase
 {
@@ -15,7 +16,7 @@ public class AuditLogController : ControllerBase
     public AuditLogController(IUnitOfWork unitOfWork) => _unitOfWork = unitOfWork;
 
     [HttpGet]
-    public async Task<IActionResult> Get(
+    public async Task<ActionResult<PaginatedList<AuditLogEntry>>> Get(
         DateTime? from = null, DateTime? to = null, Guid? userId = null, string? action = null,
         int pageNumber = 1, int pageSize = 20, CancellationToken cancellationToken = default)
     {
