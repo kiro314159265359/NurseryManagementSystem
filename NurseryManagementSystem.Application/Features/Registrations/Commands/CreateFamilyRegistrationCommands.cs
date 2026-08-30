@@ -91,6 +91,12 @@ namespace NurseryManagementSystem.Application.Features.Registrations.Commands
                 var child = RegistrationSupport.CreateChild(
                     registration.Child, userId, approvalStatus);
                 await _unitOfWork.Repository<Child>().AddAsync(child, cancellationToken);
+                await _unitOfWork.Repository<ParentChild>().AddAsync(new ParentChild
+                {
+                    ParentUserId = userId,
+                    ChildId = child.Id,
+                    Relationship = registration.AccountOwner.ToString()
+                }, cancellationToken);
 
                 if (approvalStatus == ApprovalStatus.Approved &&
                     child.RequestedPlanId is Guid planId)

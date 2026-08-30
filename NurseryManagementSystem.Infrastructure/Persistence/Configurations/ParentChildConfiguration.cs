@@ -14,7 +14,7 @@ public class ParentChildConfiguration : IEntityTypeConfiguration<ParentChild>
         builder.HasIndex(x => new { x.ParentUserId, x.ChildId }).IsUnique();
 
         builder.HasOne(x => x.ParentUser)
-            .WithMany(x => x.Children)
+            .WithMany(x => x.ParentChildren)
             .HasForeignKey(x => x.ParentUserId)
             .OnDelete(DeleteBehavior.Cascade);
 

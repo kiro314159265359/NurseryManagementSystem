@@ -56,6 +56,12 @@ namespace NurseryManagementSystem.Application.Features.Registrations.Commands
             var child = RegistrationSupport.CreateChild(
                 request.Child, userId, ApprovalStatus.Pending);
             await _unitOfWork.Repository<Child>().AddAsync(child, cancellationToken);
+            await _unitOfWork.Repository<ParentChild>().AddAsync(new ParentChild
+            {
+                ParentUserId = userId,
+                ChildId = child.Id,
+                Relationship = user.ParentRelationship?.ToString() ?? "Parent"
+            }, cancellationToken);
             await _unitOfWork.SaveChangesAsync(cancellationToken);
 
             return new RegistrationCreatedDto(userId, child.Id, ApprovalStatus.Pending);

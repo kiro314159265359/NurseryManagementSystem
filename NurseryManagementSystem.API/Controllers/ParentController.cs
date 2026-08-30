@@ -42,7 +42,7 @@ public class ParentController : ApiControllerBase
                 x.Child.QrCode,
                 x.Child.IsActive,
                 x.Relationship,
-                Status = x.Child.IsActive ? "Approved" : "PendingApproval"
+                Status = x.Child.ApprovalStatus.ToString()
             })
             .OrderBy(x => x.FullName)
             .ToListAsync(cancellationToken);
@@ -70,6 +70,8 @@ public class ParentController : ApiControllerBase
         var child = await _unitOfWork.Repository<Child>().GetByIdAsync(childId, cancellationToken)
             ?? throw new InvalidOperationException("The enrolled child could not be loaded.");
         child.IsActive = false;
+        child.ParentUserId = parentId;
+        child.ApprovalStatus = Domain.Enums.ApprovalStatus.Pending;
         _unitOfWork.Repository<Child>().Update(child);
 
         await _unitOfWork.Repository<ParentChild>().AddAsync(new ParentChild
@@ -219,7 +221,7 @@ public class ParentController : ApiControllerBase
         var owned = await _unitOfWork.Repository<ParentChild>().Query()
             .AsNoTracking()
             .AnyAsync(x => x.ParentUserId == parentId && x.ChildId == childId &&
-                           (!requireApproved || x.Child.IsActive), cancellationToken);
+                           (!requireApproved || x.Child.ApprovalStatus == Domain.Enums.ApprovalStatus.Approved), cancellationToken);
         if (!owned)
         {
             throw new UnauthorizedAccessException("You do not have access to this child.");

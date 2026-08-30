@@ -21,14 +21,6 @@ namespace NurseryManagementSystem.API.Controllers
         }
 
         [AllowAnonymous]
-        [HttpPost("register-parent")]
-        public async Task<IActionResult> RegisterParent(RegisterParentCommand command)
-        {
-            var id = await Mediator.Send(command);
-            return Created(string.Empty, new { id, message = "Parent account created." });
-        }
-
-        [AllowAnonymous]
         [HttpPost("refresh")]
         public async Task<ActionResult<AuthResponse>> Refresh(RefreshTokenCommand command)
             => Ok(await Mediator.Send(command));

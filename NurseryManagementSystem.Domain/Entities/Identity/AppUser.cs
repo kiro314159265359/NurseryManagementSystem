@@ -27,7 +27,7 @@ namespace NurseryManagementSystem.Domain.Entities.Identity
         public ICollection<RefreshToken> RefreshTokens { get; set; }
             = new List<RefreshToken>();
 
-        public ICollection<ParentChild> Children { get; set; }
+        public ICollection<ParentChild> ParentChildren { get; set; }
             = new List<ParentChild>();
     }
 }
