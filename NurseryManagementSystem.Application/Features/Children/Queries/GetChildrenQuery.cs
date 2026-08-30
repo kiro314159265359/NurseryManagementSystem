@@ -4,6 +4,7 @@ using NurseryManagementSystem.Application.Common.Interfaces;
 using NurseryManagementSystem.Application.Common.Models;
 using NurseryManagementSystem.Application.Features.Children.DTOs;
 using NurseryManagementSystem.Domain.Entities.Children;
+using NurseryManagementSystem.Domain.Enums;
 
 namespace NurseryManagementSystem.Application.Features.Children.Queries
 {
@@ -27,7 +28,9 @@ namespace NurseryManagementSystem.Application.Features.Children.Queries
             var pageNumber = request.PageNumber < 1 ? 1 : request.PageNumber;
             var pageSize = request.PageSize is < 1 or > 200 ? 20 : request.PageSize;
 
-            var query = _unitOfWork.Repository<Child>().Query().AsNoTracking();
+            var query = _unitOfWork.Repository<Child>().Query()
+                .AsNoTracking()
+                .Where(c => c.ApprovalStatus == ApprovalStatus.Approved);
 
             if (request.ActiveOnly)
             {
@@ -52,7 +55,8 @@ namespace NurseryManagementSystem.Application.Features.Children.Queries
                     c.HomeAddress,
                     c.Allergies,
                     c.QrCode,
-                    c.IsActive));
+                    c.IsActive,
+                    c.ApprovalStatus));
 
             return await PaginatedList<ChildDto>.CreateAsync(projected, pageNumber, pageSize, cancellationToken);
         }

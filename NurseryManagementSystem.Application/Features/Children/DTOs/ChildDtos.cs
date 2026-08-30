@@ -1,3 +1,5 @@
+using NurseryManagementSystem.Domain.Enums;
+
 namespace NurseryManagementSystem.Application.Features.Children.DTOs
 {
     public record ChildDto(
@@ -10,9 +12,11 @@ namespace NurseryManagementSystem.Application.Features.Children.DTOs
         string HomeAddress,
         string? Allergies,
         string QrCode,
-        bool IsActive);
+        bool IsActive,
+        ApprovalStatus ApprovalStatus);
 
     public record ParentDto(
+        string FullName,
         string Phone,
         string Email,
         string Occupation,
@@ -44,6 +48,7 @@ namespace NurseryManagementSystem.Application.Features.Children.DTOs
         string? Allergies,
         string QrCode,
         bool IsActive,
+        ApprovalStatus ApprovalStatus,
         ParentDto? Mother,
         ParentDto? Father,
         AgreementDto? Agreement,

@@ -4,6 +4,7 @@ using NurseryManagementSystem.Application.Common.Exceptions;
 using NurseryManagementSystem.Application.Common.Interfaces;
 using NurseryManagementSystem.Domain.Entities.Children;
 using NurseryManagementSystem.Domain.Entities.Plans;
+using NurseryManagementSystem.Domain.Enums;
 
 namespace NurseryManagementSystem.Application.Features.PlanAssignments.Commands
 {
@@ -36,7 +37,10 @@ namespace NurseryManagementSystem.Application.Features.PlanAssignments.Commands
                 ?? throw new ForbiddenAccessException();
 
             var childExists = await _unitOfWork.Repository<Child>()
-                .AnyAsync(c => c.Id == request.ChildId, cancellationToken);
+                .AnyAsync(c => c.Id == request.ChildId &&
+                               c.ApprovalStatus == ApprovalStatus.Approved &&
+                               c.IsActive,
+                    cancellationToken);
             if (!childExists)
             {
                 throw new NotFoundException("Child", request.ChildId);

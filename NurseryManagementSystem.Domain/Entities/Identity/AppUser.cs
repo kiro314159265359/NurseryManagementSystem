@@ -1,5 +1,6 @@
 ﻿using Microsoft.AspNetCore.Identity;
 using NurseryManagementSystem.Domain.Enums;
+using NurseryManagementSystem.Domain.Entities.Children;
 using System;
 using System.Collections.Generic;
 using System.Text;
@@ -15,6 +16,13 @@ namespace NurseryManagementSystem.Domain.Entities.Identity
         public string? QrCode { get; set; }
 
         public bool IsActive { get; set; } = true;
+
+        public ApprovalStatus ApprovalStatus { get; set; } = ApprovalStatus.Approved;
+
+        public ParentRelationship? ParentRelationship { get; set; }
+
+        public ICollection<Child> Children { get; set; }
+            = new List<Child>();
 
         public ICollection<RefreshToken> RefreshTokens { get; set; }
             = new List<RefreshToken>();

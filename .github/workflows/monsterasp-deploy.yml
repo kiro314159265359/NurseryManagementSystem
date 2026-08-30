@@ -16,6 +16,8 @@ jobs:
     runs-on: windows-latest
     permissions:
       contents: read
+    env:
+      MONSTERASP_WEBSITE_NAME: ${{ secrets.WEBSITE_NAME }}
 
     steps:
       - name: Check out source
@@ -33,10 +35,10 @@ jobs:
         run: dotnet build NurseryManagementSystem.slnx --configuration Release --no-restore
 
       - name: Publish API
-        run: dotnet publish NurseryManagementSystem.API/NurseryManagementSystem.API.csproj --configuration Release --output ./publish --runtime win-x86 --self-contained false --no-restore
+        run: dotnet publish NurseryManagementSystem.API/NurseryManagementSystem.API.csproj --configuration Release --output ./publish --runtime win-x86 --self-contained false
 
       - name: Deploy with Web Deploy
-        if: github.event_name != 'pull_request'
+        if: github.event_name != 'pull_request' && env.MONSTERASP_WEBSITE_NAME != ''
         uses: rasmusbuchholdt/simply-web-deploy@2.1.0
         with:
           website-name: ${{ secrets.WEBSITE_NAME }}

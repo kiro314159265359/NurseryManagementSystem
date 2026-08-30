@@ -44,9 +44,11 @@ namespace NurseryManagementSystem.Application.Features.Children.Queries
                 child.Allergies,
                 child.QrCode,
                 child.IsActive,
+                child.ApprovalStatus,
                 child.Mother is null
                     ? null
                     : new ParentDto(
+                        child.Mother.FullName,
                         child.Mother.Phone,
                         child.Mother.Email,
                         child.Mother.Occupation,
@@ -57,6 +59,7 @@ namespace NurseryManagementSystem.Application.Features.Children.Queries
                 child.Father is null
                     ? null
                     : new ParentDto(
+                        child.Father.FullName,
                         child.Father.Phone,
                         child.Father.Email,
                         child.Father.Occupation,

@@ -1,6 +1,7 @@
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 using NurseryManagementSystem.Domain.Entities.Children;
+using NurseryManagementSystem.Domain.Enums;
 
 namespace NurseryManagementSystem.Infrastructure.Persistence.Configurations
 {
@@ -28,6 +29,19 @@ namespace NurseryManagementSystem.Infrastructure.Persistence.Configurations
             builder.HasIndex(c => c.QrCode).IsUnique();
 
             builder.Property(c => c.IsActive).HasDefaultValue(true);
+
+            builder.Property(c => c.ApprovalStatus)
+                .HasConversion<int>()
+                .HasDefaultValue(ApprovalStatus.Approved);
+
+            builder.Property(c => c.RejectionReason).HasMaxLength(500);
+
+            builder.HasOne(c => c.ParentUser)
+                .WithMany(u => u.Children)
+                .HasForeignKey(c => c.ParentUserId)
+                .OnDelete(DeleteBehavior.SetNull);
+
+            builder.HasIndex(c => new { c.ParentUserId, c.ApprovalStatus });
 
             builder.HasOne(c => c.Mother)
                 .WithOne(m => m.Child)

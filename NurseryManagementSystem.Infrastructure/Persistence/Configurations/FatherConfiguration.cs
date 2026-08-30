@@ -12,6 +12,7 @@ namespace NurseryManagementSystem.Infrastructure.Persistence.Configurations
 
             builder.HasKey(f => f.Id);
 
+            builder.Property(f => f.FullName).HasMaxLength(200);
             builder.Property(f => f.Phone).HasMaxLength(30);
             builder.Property(f => f.Email).HasMaxLength(256);
             builder.Property(f => f.Occupation).HasMaxLength(150);

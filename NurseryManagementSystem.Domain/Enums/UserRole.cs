@@ -7,6 +7,7 @@ namespace NurseryManagementSystem.Domain.Enums
     public enum UserRole
     {
         SuperAdmin = 1,
-        SubAdmin = 2
+        SubAdmin = 2,
+        Parent = 3
     }
 }

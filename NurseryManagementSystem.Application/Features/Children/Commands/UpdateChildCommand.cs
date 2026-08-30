@@ -70,6 +70,7 @@ namespace NurseryManagementSystem.Application.Features.Children.Commands
             child.Allergies = request.Allergies;
 
             child.Mother ??= new Mother { ChildId = child.Id };
+            child.Mother.FullName = request.Mother.FullName ?? string.Empty;
             child.Mother.Phone = request.Mother.Phone;
             child.Mother.Email = request.Mother.Email;
             child.Mother.Occupation = request.Mother.Occupation;
@@ -79,6 +80,7 @@ namespace NurseryManagementSystem.Application.Features.Children.Commands
             child.Mother.Address = request.Mother.Address;
 
             child.Father ??= new Father { ChildId = child.Id };
+            child.Father.FullName = request.Father.FullName ?? string.Empty;
             child.Father.Phone = request.Father.Phone;
             child.Father.Email = request.Father.Email;
             child.Father.Occupation = request.Father.Occupation;
