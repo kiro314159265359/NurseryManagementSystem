@@ -31,7 +31,16 @@ namespace NurseryManagementSystem.Application.Features.Plans.Queries
                 plan.DurationHours,
                 plan.IsWeekend,
                 plan.MonthlyFee,
-                plan.DailyOvertimeFee);
+                plan.DailyOvertimeFee,
+                plan.Category,
+                plan.BillingCycle,
+                plan.DaysPerCycle,
+                plan.IsFullDay,
+                plan.BadgeText,
+                plan.IsFeatured,
+                plan.IsActive,
+                plan.Currency,
+                plan.DisplayOrder);
         }
     }
 }

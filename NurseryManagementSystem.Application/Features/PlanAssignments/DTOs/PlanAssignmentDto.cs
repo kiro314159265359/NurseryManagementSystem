@@ -5,7 +5,15 @@ namespace NurseryManagementSystem.Application.Features.PlanAssignments.DTOs
         Guid ChildId,
         Guid PlanId,
         string PlanName,
+        string PlanCategory,
+        decimal Price,
+        int DurationHours,
+        int DaysPerCycle,
         DateOnly StartDate,
         DateOnly? EndDate,
-        Guid AssignedById);
+        bool IsActive,
+        Guid AssignedById,
+        string AssignedByName,
+        DateTime AssignedAt,
+        string Currency);
 }

@@ -5,6 +5,7 @@ using NurseryManagementSystem.Application.Common.Interfaces;
 using NurseryManagementSystem.Application.Features.Registrations.DTOs;
 using NurseryManagementSystem.Domain.Entities.Children;
 using NurseryManagementSystem.Domain.Enums;
+using NurseryManagementSystem.Domain.Entities.Plans;
 
 namespace NurseryManagementSystem.Application.Features.Registrations.Queries
 {
@@ -27,7 +28,18 @@ namespace NurseryManagementSystem.Application.Features.Registrations.Queries
                 .Where(child => child.ApprovalStatus == ApprovalStatus.Pending)
                 .OrderBy(child => child.CreatedAt)
                 .ToListAsync(cancellationToken);
-            return children.Select(ToDto).ToList();
+            var planIds = children.Where(x => x.RequestedPlanId != null).Select(x => x.RequestedPlanId!.Value).Distinct().ToList();
+            var planNames = await _unitOfWork.Repository<SubscriptionPlan>().Query().AsNoTracking()
+                .Where(x => planIds.Contains(x.Id)).ToDictionaryAsync(x => x.Id, x => x.Name, cancellationToken);
+            var parentCounts = await _unitOfWork.Repository<Child>().Query().AsNoTracking()
+                .Where(x => x.ParentUserId != null)
+                .GroupBy(x => x.ParentUserId!.Value)
+                .Select(g => new { ParentId = g.Key, Count = g.Count() })
+                .ToDictionaryAsync(x => x.ParentId, x => x.Count, cancellationToken);
+            return children.Select(child => ToDto(
+                child,
+                child.RequestedPlanId is Guid planId && planNames.TryGetValue(planId, out var name) ? name : null,
+                child.ParentUserId is Guid parentId && parentCounts.GetValueOrDefault(parentId) == 1)).ToList();
         }
 
         internal static IQueryable<Child> RegistrationProjection(IUnitOfWork unitOfWork)
@@ -37,7 +49,7 @@ namespace NurseryManagementSystem.Application.Features.Registrations.Queries
                 .Include(child => child.Mother)
                 .Include(child => child.Father);
 
-        internal static RegistrationDto ToDto(Child child)
+        internal static RegistrationDto ToDto(Child child, string? requestedPlanName = null, bool isFirstChild = false)
         {
             var fatherOwnsAccount = child.ParentUser?.ParentRelationship == ParentRelationship.Father;
             var ownerName = fatherOwnsAccount ? child.Father?.FullName : child.Mother?.FullName;
@@ -56,6 +68,8 @@ namespace NurseryManagementSystem.Application.Features.Registrations.Queries
                 child.ParentUser?.PhoneNumber ?? ownerPhone ?? string.Empty,
                 child.ParentUser?.ParentRelationship ?? ParentRelationship.Mother,
                 child.RequestedPlanId,
+                requestedPlanName,
+                isFirstChild,
                 child.RejectionReason,
                 child.CreatedAt);
         }
@@ -84,7 +98,7 @@ namespace NurseryManagementSystem.Application.Features.Registrations.Queries
                 .Where(child => child.ParentUserId == userId)
                 .OrderByDescending(child => child.CreatedAt)
                 .ToListAsync(cancellationToken);
-            return children.Select(GetPendingRegistrationsQueryHandler.ToDto).ToList();
+            return children.Select(child => GetPendingRegistrationsQueryHandler.ToDto(child)).ToList();
         }
     }
 }

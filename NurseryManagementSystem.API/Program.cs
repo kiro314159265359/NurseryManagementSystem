@@ -52,6 +52,7 @@ namespace NurseryManagementSystem.API
 
             // Configure the HTTP request pipeline.
             app.UseHttpsRedirection();
+            app.UseStaticFiles();
 
             app.UseAuthentication();
             app.UseAuthorization();

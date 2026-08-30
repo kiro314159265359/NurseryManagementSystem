@@ -9,16 +9,18 @@ namespace NurseryManagementSystem.Application.Features.Registrations.DTOs
 
     public record RegistrationDto(
         Guid ChildId,
-        string ChildName,
+        string ChildFullName,
         DateOnly DateOfBirth,
         DateOnly EnrollmentDate,
         ApprovalStatus ApprovalStatus,
         Guid ParentUserId,
-        string ParentName,
+        string ParentFullName,
         string ParentEmail,
         string ParentPhone,
         ParentRelationship AccountOwner,
         Guid? RequestedPlanId,
+        string? RequestedPlanName,
+        bool IsFirstChild,
         string? RejectionReason,
-        DateTime CreatedAt);
+        DateTime SubmittedAt);
 }

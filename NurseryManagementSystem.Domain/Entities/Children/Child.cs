@@ -20,6 +20,7 @@ namespace NurseryManagementSystem.Domain.Entities.Children
         public string Religion { get; set; } = string.Empty;
         public string HomeAddress { get; set; } = string.Empty;
         public string? Allergies { get; set; }
+        public string? PhotoUrl { get; set; }
 
         public string QrCode { get; set; } = string.Empty;
         public bool IsActive { get; set; } = true;

@@ -35,7 +35,19 @@ namespace NurseryManagementSystem.Application.Features.Billing.Queries
                 invoice.GrandTotal,
                 invoice.Status.ToString(),
                 invoice.PaidAt,
-                invoice.MarkedPaidById);
+                invoice.MarkedPaidById,
+                $"INV-{invoice.BillingYear:D4}-{invoice.BillingMonth:D2}-{invoice.Id.ToString("N")[..6].ToUpperInvariant()}",
+                null, null, null, "AED",
+                invoice.Status == Domain.Enums.InvoiceStatus.Paid ? invoice.GrandTotal : 0m,
+                invoice.Status is Domain.Enums.InvoiceStatus.Paid or Domain.Enums.InvoiceStatus.Cancelled ? 0m : invoice.GrandTotal,
+                null,
+                invoice.CreatedAt,
+                invoice.AdjustmentAmount,
+                invoice.AdjustmentReason,
+                invoice.PenaltyAmount,
+                invoice.LatePickupDays,
+                invoice.LatePickupFinePerDay,
+                invoice.OvertimeRate);
         }
     }
 }

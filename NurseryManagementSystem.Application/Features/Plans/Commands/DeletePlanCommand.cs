@@ -26,15 +26,8 @@ namespace NurseryManagementSystem.Application.Features.Plans.Commands
                 throw new NotFoundException("SubscriptionPlan", request.Id);
             }
 
-            var isInUse = await _unitOfWork.Repository<ChildPlanAssignment>()
-                .AnyAsync(a => a.PlanId == request.Id, cancellationToken);
-
-            if (isInUse)
-            {
-                throw new ConflictException("This plan cannot be deleted because it is assigned to one or more children.");
-            }
-
-            repository.Remove(plan);
+            plan.IsActive = false;
+            repository.Update(plan);
             await _unitOfWork.SaveChangesAsync(cancellationToken);
 
             return Unit.Value;

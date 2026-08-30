@@ -19,6 +19,14 @@ namespace NurseryManagementSystem.Domain.Entities.Plans
 
         public Guid AssignedById { get; set; }
 
+        public DateTime AssignedAt { get; set; } = DateTime.UtcNow;
+        public string PlanNameSnapshot { get; set; } = string.Empty;
+        public string PlanCategorySnapshot { get; set; } = string.Empty;
+        public decimal PriceSnapshot { get; set; }
+        public int DurationHoursSnapshot { get; set; }
+        public int DaysPerCycleSnapshot { get; set; }
+        public string CurrencySnapshot { get; set; } = "AED";
+
         public Child Child { get; set; } = null!;
 
         public SubscriptionPlan Plan { get; set; } = null!;

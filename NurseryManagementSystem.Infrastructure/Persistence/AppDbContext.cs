@@ -7,6 +7,8 @@ using NurseryManagementSystem.Domain.Entities.Children;
 using NurseryManagementSystem.Domain.Entities.Identity;
 using NurseryManagementSystem.Domain.Entities.Plans;
 using NurseryManagementSystem.Domain.Entities.Schedule;
+using NurseryManagementSystem.Domain.Entities.Nursery;
+using NurseryManagementSystem.Domain.Entities.Audit;
 
 namespace NurseryManagementSystem.Infrastructure.Persistence
 {
@@ -34,6 +36,8 @@ namespace NurseryManagementSystem.Infrastructure.Persistence
         public DbSet<MonthlyInvoice> MonthlyInvoices => Set<MonthlyInvoice>();
 
         public DbSet<DailyScheduleSlot> DailyScheduleSlots => Set<DailyScheduleSlot>();
+        public DbSet<NurserySettings> NurserySettings => Set<NurserySettings>();
+        public DbSet<AuditLogEntry> AuditLogEntries => Set<AuditLogEntry>();
 
         public DbSet<RefreshToken> RefreshTokens => Set<RefreshToken>();
 

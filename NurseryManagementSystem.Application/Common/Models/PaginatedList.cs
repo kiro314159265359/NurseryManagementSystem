@@ -12,11 +12,14 @@ namespace NurseryManagementSystem.Application.Common.Models
 
         public int TotalCount { get; }
 
+        public int PageSize { get; }
+
         public PaginatedList(IReadOnlyList<T> items, int count, int pageNumber, int pageSize)
         {
             PageNumber = pageNumber;
             TotalPages = (int)Math.Ceiling(count / (double)pageSize);
             TotalCount = count;
+            PageSize = pageSize;
             Items = items;
         }
 

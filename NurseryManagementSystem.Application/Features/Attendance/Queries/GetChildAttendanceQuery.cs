@@ -4,6 +4,7 @@ using NurseryManagementSystem.Application.Common.Interfaces;
 using NurseryManagementSystem.Application.Common.Models;
 using NurseryManagementSystem.Application.Features.Attendance.DTOs;
 using NurseryManagementSystem.Domain.Entities.Attendance;
+using NurseryManagementSystem.Domain.Entities.Plans;
 
 namespace NurseryManagementSystem.Application.Features.Attendance.Queries
 {
@@ -53,8 +54,23 @@ namespace NurseryManagementSystem.Application.Features.Attendance.Queries
                 .Take(pageSize)
                 .ToListAsync(cancellationToken);
 
+            var assignments = await _unitOfWork.Repository<ChildPlanAssignment>().Query()
+                .AsNoTracking()
+                .Include(a => a.Plan)
+                .Where(a => a.ChildId == request.ChildId)
+                .OrderByDescending(a => a.StartDate)
+                .ToListAsync(cancellationToken);
+
             var items = records
-                .Select(a => new ChildAttendanceDto(
+                .Select(a =>
+                {
+                    var assignment = assignments.FirstOrDefault(x =>
+                        x.StartDate <= a.AttendanceDate && (x.EndDate == null || x.EndDate >= a.AttendanceDate));
+                    var allowedHours = assignment is null ? (int?)null
+                        : assignment.DurationHoursSnapshot > 0
+                            ? assignment.DurationHoursSnapshot
+                            : assignment.Plan.DurationHours;
+                    return new ChildAttendanceDto(
                     a.Id,
                     a.ChildId,
                     a.ClockIn,
@@ -63,7 +79,12 @@ namespace NurseryManagementSystem.Application.Features.Attendance.Queries
                     a.HoursStayed,
                     a.OvertimeHours,
                     a.OvertimeFee,
-                    a.ScanType.ToString()))
+                    a.ScanType.ToString(),
+                    allowedHours,
+                    null,
+                    null,
+                    a.ScanType == Domain.Enums.ScanType.Manual ? "Manual" : "Scan");
+                })
                 .ToList();
 
             return new PaginatedList<ChildAttendanceDto>(items, count, pageNumber, pageSize);

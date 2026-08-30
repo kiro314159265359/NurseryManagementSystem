@@ -18,7 +18,7 @@ namespace NurseryManagementSystem.Application.Features.Registrations.Models
         IReadOnlyList<EmergencyContactInput> EmergencyContacts);
 
     public record FamilyRegistrationInput(
-        ParentRelationship AccountOwner,
-        string Password,
+        ParentRelationship? AccountOwner,
+        string? Password,
         ChildRegistrationInput Child);
 }

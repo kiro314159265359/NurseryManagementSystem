@@ -11,9 +11,20 @@ namespace NurseryManagementSystem.Application.Features.Children.DTOs
         string Religion,
         string HomeAddress,
         string? Allergies,
-        string QrCode,
+        string? PhotoUrl,
+        string ScanCode,
         bool IsActive,
-        ApprovalStatus ApprovalStatus);
+        ApprovalStatus ApprovalStatus,
+        string Status,
+        DateTime CreatedAt,
+        CurrentPlanDto? CurrentPlan);
+
+    public record CurrentPlanDto(
+        Guid AssignmentId,
+        Guid PlanId,
+        string PlanName,
+        DateOnly StartDate,
+        int DurationHours);
 
     public record ParentDto(
         string FullName,
@@ -46,11 +57,18 @@ namespace NurseryManagementSystem.Application.Features.Children.DTOs
         string Religion,
         string HomeAddress,
         string? Allergies,
-        string QrCode,
+        string? PhotoUrl,
+        string ScanCode,
         bool IsActive,
         ApprovalStatus ApprovalStatus,
+        string Status,
+        DateTime CreatedAt,
+        Guid? CreatedBy,
+        DateTime? ApprovedAt,
+        Guid? ApprovedBy,
         ParentDto? Mother,
         ParentDto? Father,
         AgreementDto? Agreement,
-        IReadOnlyList<EmergencyContactDto> EmergencyContacts);
+        IReadOnlyList<EmergencyContactDto> EmergencyContacts,
+        CurrentPlanDto? CurrentPlan);
 }

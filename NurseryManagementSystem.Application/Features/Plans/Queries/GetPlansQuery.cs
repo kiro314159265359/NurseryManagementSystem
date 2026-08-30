@@ -21,14 +21,23 @@ namespace NurseryManagementSystem.Application.Features.Plans.Queries
         {
             return await _unitOfWork.Repository<SubscriptionPlan>().Query()
                 .AsNoTracking()
-                .OrderBy(p => p.Name)
+                .OrderBy(p => p.DisplayOrder).ThenBy(p => p.Name)
                 .Select(p => new PlanDto(
                     p.Id,
                     p.Name,
                     p.DurationHours,
                     p.IsWeekend,
                     p.MonthlyFee,
-                    p.DailyOvertimeFee))
+                    p.DailyOvertimeFee,
+                    p.Category,
+                    p.BillingCycle,
+                    p.DaysPerCycle,
+                    p.IsFullDay,
+                    p.BadgeText,
+                    p.IsFeatured,
+                    p.IsActive,
+                    p.Currency,
+                    p.DisplayOrder))
                 .ToListAsync(cancellationToken);
         }
     }

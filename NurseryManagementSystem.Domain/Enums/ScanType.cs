@@ -7,6 +7,7 @@ namespace NurseryManagementSystem.Domain.Enums
     public enum ScanType
     {
         QRCode = 1,
-        Barcode = 2
+        Barcode = 2,
+        Manual = 3
     }
 }
