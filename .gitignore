@@ -374,3 +374,8 @@ MigrationBackup/
 
 # Fody - auto-generated XML schema
 FodyWeavers.xsd
+
+# Local API client exports
+/Postman/
+*.postman_collection.json
+*.postman_environment.json
